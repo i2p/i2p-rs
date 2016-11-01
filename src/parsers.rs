@@ -1,5 +1,4 @@
-use std::collections::HashMap;
-use nom::{IResult, space, alphanumeric};
+use nom::{space, alphanumeric};
 
 fn is_space(chr: char) -> bool {
     chr == ' ' || chr == '\t'
@@ -27,27 +26,32 @@ named!(key_value <&str, (&str, &str)>,
 
 named!(keys_and_values<&str, Vec<(&str, &str)> >, many0!(key_value));
 
-fn options(input: &str) -> IResult<&str, HashMap<&str, &str> > {
-    let mut h: HashMap<&str, &str> = HashMap::new();
-
-    match keys_and_values(input) {
-        IResult::Done(i, tuple_vec) => {
-            for &(k,v) in &tuple_vec {
-                h.insert(k, v);
-            }
-            IResult::Done(i, h)
-        },
-        IResult::Incomplete(a) => IResult::Incomplete(a),
-        IResult::Error(a)      => IResult::Error(a)
-    }
-}
-
-named!(pub sam_hello <&str, HashMap<&str, &str> >,
+named!(pub sam_hello <&str, Vec<(&str, &str)> >,
     chain!(
-                       tag_s!("HELLO") ~
-                       space?          ~
-                       tag_s!("REPLY") ~
-        parse_options: options         ,
+                       tag_s!("HELLO")  ~
+                       space?           ~
+                       tag_s!("REPLY")  ~
+        parse_options: keys_and_values  ,
         || { parse_options }
     )
+);
+
+named!(pub sam_naming_lookup <&str, Vec<(&str, &str)> >,
+       chain!(
+           tag_s!("NAMING") ~
+           space?           ~
+           tag_s!("REPLY")  ~
+           parse_options: keys_and_values,
+           || { parse_options }
+       )
+);
+
+named!(pub sam_stream_session <&str, Vec<(&str, &str)> >,
+       chain!(
+           tag_s!("HELLO")      ~
+               space?           ~
+               tag_s!("REPLY")  ~
+               parse_options: keys_and_values  ,
+           || { parse_options }
+       )
 );
