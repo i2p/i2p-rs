@@ -1,5 +1,6 @@
 MIT License
 
+Copyright (c) 2017 The I2P Project
 Copyright (c) 2016 Igor Trindade Oliveira
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
