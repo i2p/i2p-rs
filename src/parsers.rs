@@ -55,3 +55,47 @@ named!(pub sam_stream_session <&str, Vec<(&str, &str)> >,
            || { parse_options }
        )
 );
+
+#[cfg(test)]
+mod tests {
+    use nom::IResult::Done;
+
+    #[test]
+    fn hello() {
+        use parsers::sam_hello;
+
+        assert_eq!(
+            sam_hello("HELLO REPLY RESULT=OK VERSION=3.1\n"),
+            Done("\n", vec![("RESULT", "OK"), ("VERSION", "3.1")]));
+        assert_eq!(
+            sam_hello("HELLO REPLY RESULT=NOVERSION\n"),
+            Done("\n", vec![("RESULT", "NOVERSION")]));
+        assert_eq!(
+            sam_hello("HELLO REPLY RESULT=I2P_ERROR MESSAGE=\"Something failed\"\n"),
+            Done("\n", vec![("RESULT", "I2P_ERROR"), ("MESSAGE", "Something failed")]));
+    }
+
+    #[test]
+    fn session_status() {
+        use parsers::sam_stream_session;
+
+        assert_eq!(
+            sam_stream_session("SESSION STATUS RESULT=OK DESTINATION=privkey\n"),
+            Done("\n", vec![("RESULT", "OK"), ("DESTINATION", "privkey")]));
+        assert_eq!(
+            sam_stream_session("SESSION STATUS RESULT=DUPLICATED_ID\n"),
+            Done("\n", vec![("RESULT", "DUPLICATED_ID")]));
+    }
+
+    #[test]
+    fn naming_reply() {
+        use parsers::sam_naming_lookup;
+
+        assert_eq!(
+            sam_naming_lookup("NAMING REPLY RESULT=OK NAME=name VALUE=dest\n"),
+            Done("\n", vec![("RESULT", "OK"), ("NAME", "name"), ("VALUE", "dest")]));
+        assert_eq!(
+            sam_naming_lookup("NAMING REPLY RESULT=KEY_NOT_FOUND\n"),
+            Done("\n", vec![("RESULT", "KEY_NOT_FOUND")]));
+    }
+}
