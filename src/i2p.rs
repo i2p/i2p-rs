@@ -10,28 +10,28 @@ static SAM_MAX: &'static str = "3.1";
 pub enum SessionStyle {
     Datagram,
     Raw,
-    Stream
+    Stream,
 }
 
 pub struct Socket {
-    stream: TcpStream
+    stream: TcpStream,
 }
 
 pub struct Stream<'b> {
-    socket: &'b Socket
+    socket: &'b Socket,
 }
 
 impl SessionStyle {
     fn string<'a>(&'a self) -> &'a str {
         match *self {
             SessionStyle::Datagram => "DATAGRAM",
-            SessionStyle::Raw      => "RAW",
-            SessionStyle::Stream   => "STREAM",
+            SessionStyle::Raw => "RAW",
+            SessionStyle::Stream => "STREAM",
         }
     }
 }
 
-fn parse_response(response: IResult<&str, Vec<(&str, &str)> >) -> Result<(), Error> {
+fn parse_response(response: IResult<&str, Vec<(&str, &str)>>) -> Result<(), Error> {
     let verify_response = |vec: Vec<(&str, &str)>| -> Result<(), Error> {
         for &(key, value) in &vec {
             println!("{}={}", key, value);
@@ -44,12 +44,13 @@ fn parse_response(response: IResult<&str, Vec<(&str, &str)> >) -> Result<(), Err
 
     match response {
         IResult::Done(_, vec) => verify_response(vec),
-        _ => panic!("Parser error")
+        _ => panic!("Parser error"),
     }
 }
 
 fn read_line_parse<F>(stream: &TcpStream, parser_fn: F) -> Result<(), Error>
-    where F: Fn(&str) -> IResult<&str, Vec<(&str, &str)> > {
+    where F: Fn(&str) -> IResult<&str, Vec<(&str, &str)>>
+{
 
     let mut reader = BufReader::new(stream);
     let mut buffer = String::new();
@@ -80,8 +81,7 @@ impl Socket {
 
     // TODO: Implement a lookup table
     pub fn naming_lookup<'a>(&'a mut self, name: &str) -> Result<&'a str, Error> {
-        let create_naming_lookup_msg =
-            format!("NAMING LOOKUP NAME={name} \n", name = name);
+        let create_naming_lookup_msg = format!("NAMING LOOKUP NAME={name} \n", name = name);
         try!(self.stream.write(&create_naming_lookup_msg.into_bytes()));
 
         try!(read_line_parse(&self.stream, sam_naming_lookup));
@@ -89,14 +89,15 @@ impl Socket {
         Ok("Test")
     }
 
-    pub fn create_session<'b>(
-        &'b mut self, destination: &str, nickname: &str, style: SessionStyle
-    ) -> Result<Stream<'b>, Error> {
-        let create_session_msg =
-            format!("SESSION CREATE STYLE={style} ID={nickname} DESTINATION={destination} \n",
-                    style = style.string(),
-                    nickname = nickname,
-                    destination = destination);
+    pub fn create_session<'b>(&'b mut self,
+                              destination: &str,
+                              nickname: &str,
+                              style: SessionStyle)
+                              -> Result<Stream<'b>, Error> {
+        let create_session_msg = format!("SESSION CREATE STYLE={style} ID={nickname} DESTINATION={destination} \n",
+                                         style = style.string(),
+                                         nickname = nickname,
+                                         destination = destination);
 
         try!(self.stream.write(&create_session_msg.into_bytes()));
 
@@ -106,5 +107,4 @@ impl Socket {
     }
 }
 
-impl<'b> Stream<'b> {
-}
+impl<'b> Stream<'b> {}
