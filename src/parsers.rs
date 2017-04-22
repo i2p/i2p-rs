@@ -36,7 +36,7 @@ named!(pub sam_hello <&str, Vec<(&str, &str)> >,
     )
 );
 
-named!(pub sam_naming_lookup <&str, Vec<(&str, &str)> >,
+named!(pub sam_naming_reply <&str, Vec<(&str, &str)> >,
        chain!(
            tag_s!("NAMING") ~
            space?           ~
@@ -46,7 +46,7 @@ named!(pub sam_naming_lookup <&str, Vec<(&str, &str)> >,
        )
 );
 
-named!(pub sam_stream_session <&str, Vec<(&str, &str)> >,
+named!(pub sam_session_status <&str, Vec<(&str, &str)> >,
        chain!(
            tag_s!("HELLO")      ~
                space?           ~
@@ -77,25 +77,25 @@ mod tests {
 
     #[test]
     fn session_status() {
-        use parsers::sam_stream_session;
+        use parsers::sam_session_status;
 
         assert_eq!(
-            sam_stream_session("SESSION STATUS RESULT=OK DESTINATION=privkey\n"),
+            sam_session_status("SESSION STATUS RESULT=OK DESTINATION=privkey\n"),
             Done("\n", vec![("RESULT", "OK"), ("DESTINATION", "privkey")]));
         assert_eq!(
-            sam_stream_session("SESSION STATUS RESULT=DUPLICATED_ID\n"),
+            sam_session_status("SESSION STATUS RESULT=DUPLICATED_ID\n"),
             Done("\n", vec![("RESULT", "DUPLICATED_ID")]));
     }
 
     #[test]
     fn naming_reply() {
-        use parsers::sam_naming_lookup;
+        use parsers::sam_naming_reply;
 
         assert_eq!(
-            sam_naming_lookup("NAMING REPLY RESULT=OK NAME=name VALUE=dest\n"),
+            sam_naming_reply("NAMING REPLY RESULT=OK NAME=name VALUE=dest\n"),
             Done("\n", vec![("RESULT", "OK"), ("NAME", "name"), ("VALUE", "dest")]));
         assert_eq!(
-            sam_naming_lookup("NAMING REPLY RESULT=KEY_NOT_FOUND\n"),
+            sam_naming_reply("NAMING REPLY RESULT=KEY_NOT_FOUND\n"),
             Done("\n", vec![("RESULT", "KEY_NOT_FOUND")]));
     }
 }

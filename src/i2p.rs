@@ -1,5 +1,5 @@
 use nom::IResult;
-use parsers::{sam_hello, sam_naming_lookup, sam_stream_session};
+use parsers::{sam_hello, sam_naming_reply, sam_session_status};
 use std::net::{TcpStream, ToSocketAddrs};
 use std::io::{Error, BufReader};
 use std::io::prelude::*;
@@ -84,7 +84,7 @@ impl Socket {
         let create_naming_lookup_msg = format!("NAMING LOOKUP NAME={name} \n", name = name);
         try!(self.stream.write(&create_naming_lookup_msg.into_bytes()));
 
-        try!(read_line_parse(&self.stream, sam_naming_lookup));
+        try!(read_line_parse(&self.stream, sam_naming_reply));
 
         Ok("Test")
     }
@@ -101,7 +101,7 @@ impl Socket {
 
         try!(self.stream.write(&create_session_msg.into_bytes()));
 
-        try!(read_line_parse(&self.stream, sam_stream_session));
+        try!(read_line_parse(&self.stream, sam_session_status));
 
         Ok(Stream { socket: self })
     }
