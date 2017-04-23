@@ -1,17 +1,16 @@
 #[macro_use]
 extern crate nom;
 
-pub use i2p::Socket;
+pub use sam::Socket;
 
-mod i2p;
+mod sam;
 mod parsers;
 
 #[cfg(test)]
 mod tests {
     #[test]
     fn it_works() {
-        use i2p::Socket;
-        use i2p::SessionStyle;
+        use sam::Socket;
         let socket = Socket::connect("127.0.0.1:7656");
         match socket {
             Ok(_) => println!("works"),
