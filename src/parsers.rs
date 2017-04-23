@@ -56,11 +56,29 @@ named!(pub sam_session_status <&str, Vec<(&str, &str)> >,
     )
 );
 
+named!(pub sam_stream_status <&str, Vec<(&str, &str)> >,
+    do_parse!(
+              tag_s!("STREAM STATUS ") >>
+        opts: keys_and_values          >>
+              tag_s!("\n")             >>
+        (opts)
+    )
+);
+
 named!(pub sam_naming_reply <&str, Vec<(&str, &str)> >,
     do_parse!(
               tag_s!("NAMING REPLY ") >>
         opts: keys_and_values         >>
               tag_s!("\n")            >>
+        (opts)
+    )
+);
+
+named!(pub sam_dest_reply <&str, Vec<(&str, &str)> >,
+    do_parse!(
+              tag_s!("DEST REPLY ") >>
+        opts: keys_and_values       >>
+              tag_s!("\n")          >>
         (opts)
     )
 );
@@ -99,6 +117,18 @@ mod tests {
     }
 
     #[test]
+    fn stream_status() {
+        use parsers::sam_stream_status;
+
+        assert_eq!(
+            sam_stream_status("STREAM STATUS RESULT=OK\n"),
+            Done("", vec![("RESULT", "OK")]));
+        assert_eq!(
+            sam_stream_status("STREAM STATUS RESULT=CANT_REACH_PEER MESSAGE=\"Can't reach peer\"\n"),
+            Done("", vec![("RESULT", "CANT_REACH_PEER"), ("MESSAGE", "Can't reach peer")]));
+    }
+
+    #[test]
     fn naming_reply() {
         use parsers::sam_naming_reply;
 
@@ -115,5 +145,14 @@ mod tests {
         assert_eq!(
             sam_naming_reply("NAMING  REPLY RESULT=KEY_NOT_FOUND\n"),
             Error(ErrorKind::Tag));
+    }
+
+    #[test]
+    fn dest_reply() {
+        use parsers::sam_dest_reply;
+
+        assert_eq!(
+            sam_dest_reply("DEST REPLY PUB=foo PRIV=foobar\n"),
+            Done("", vec![("PUB", "foo"), ("PRIV", "foobar")]));
     }
 }
