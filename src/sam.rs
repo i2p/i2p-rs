@@ -1,7 +1,10 @@
 use nom::IResult;
 use parsers::{sam_hello, sam_naming_reply, sam_session_status};
+use std::clone::Clone;
+use std::collections::HashMap;
+use std::iter::FromIterator;
 use std::net::{TcpStream, ToSocketAddrs};
-use std::io::{Error, BufReader};
+use std::io::{Error, ErrorKind, BufReader};
 use std::io::prelude::*;
 
 static SAM_MIN: &'static str = "3.0";
@@ -13,12 +16,17 @@ pub enum SessionStyle {
     Stream,
 }
 
-pub struct Socket {
-    stream: TcpStream,
+pub struct SamConnection {
+    conn: TcpStream,
+}
+
+pub struct Session {
+    sam: SamConnection,
 }
 
 pub struct Stream<'b> {
-    socket: &'b Socket,
+    sam: SamConnection,
+    session: &'b Session,
 }
 
 impl SessionStyle {
@@ -31,48 +39,53 @@ impl SessionStyle {
     }
 }
 
-fn parse_response(response: IResult<&str, Vec<(&str, &str)>>) -> Result<(), Error> {
-    let verify_response = |vec: Vec<(&str, &str)>| -> Result<(), Error> {
-        for &(key, value) in &vec {
-            println!("{}={}", key, value);
-            if key == "RESULT" && value == "OK" {
-                return Ok(());
-            }
-        }
-        Ok(())
-    };
-
-    match response {
-        IResult::Done(_, vec) => verify_response(vec),
-        _ => panic!("Parser error"),
+fn verify_response<'a>(vec: &'a Vec<(&str, &str)>) -> Result<HashMap<&'a str, &'a str>, Error> {
+    let newVec = vec.clone();
+    let map: HashMap<&str, &str> = newVec.iter().map(|&(k, v)| (k, v)).collect();
+    let res = map.get("RESULT").unwrap_or(&"OK").clone();
+    let msg = map.get("MESSAGE").unwrap_or(&"").clone();
+    match res {
+        "OK"               => Ok(map),
+        "CANT_REACH_PEER"  => Err(Error::new(ErrorKind::NotFound, msg)),
+        "DUPLICATED_DEST"  => Err(Error::new(ErrorKind::AddrInUse, msg)),
+        "I2P_ERROR"        => Err(Error::new(ErrorKind::Other, msg)),
+        "INVALID_KEY"      => Err(Error::new(ErrorKind::InvalidInput, msg)),
+        "KEY_NOT_FOUND"    => Err(Error::new(ErrorKind::NotFound, msg)),
+        "PEER_NOT_FOUND"   => Err(Error::new(ErrorKind::NotFound, msg)),
+        "INVALID_ID"       => Err(Error::new(ErrorKind::InvalidInput, msg)),
+        "TIMEOUT"          => Err(Error::new(ErrorKind::TimedOut, msg)),
+        _                   => Err(Error::new(ErrorKind::Other, msg)),
     }
 }
 
-fn read_line_parse<F>(stream: &TcpStream, parser_fn: F) -> Result<(), Error>
-    where F: Fn(&str) -> IResult<&str, Vec<(&str, &str)>>
-{
+impl SamConnection {
+    fn send<F>(&mut self, msg: String, reply_parser: F) -> Result<HashMap<String, String>, Error>
+        where F: Fn(&str) -> IResult<&str, Vec<(&str, &str)>>
+    {
+        try!(self.conn.write(&msg.into_bytes()));
 
-    let mut reader = BufReader::new(stream);
-    let mut buffer = String::new();
-    try!(reader.read_line(&mut buffer));
+        let mut reader = BufReader::new(&self.conn);
+        let mut buffer = String::new();
+        try!(reader.read_line(&mut buffer));
 
-    println!("{}", buffer);
-    parse_response(parser_fn(&buffer))
-}
+        let response = reply_parser(&buffer);
+        let vec_opts = response.unwrap().1;
+        verify_response(&vec_opts).map(|m| {
+            m.iter().map(|(k, v)| (k.to_string(), v.to_string())).collect()
+        })
+    }
 
-impl Socket {
-    fn handshake(&mut self) -> Result<(), Error> {
+    fn handshake(&mut self) -> Result<HashMap<String, String>, Error> {
         let hello_msg = format!("HELLO VERSION MIN={min} MAX={max} \n",
                                 min = SAM_MIN,
                                 max = SAM_MAX);
-        try!(self.stream.write(&hello_msg.into_bytes()));
-        read_line_parse(&self.stream, sam_hello)
+        self.send(hello_msg, sam_hello)
     }
 
-    pub fn connect<A: ToSocketAddrs>(addr: A) -> Result<Socket, Error> {
+    pub fn connect<A: ToSocketAddrs>(addr: A) -> Result<SamConnection, Error> {
         let tcp_stream = try!(TcpStream::connect(addr));
 
-        let mut socket = Socket { stream: tcp_stream };
+        let mut socket = SamConnection { conn: tcp_stream };
 
         try!(socket.handshake());
 
@@ -80,30 +93,24 @@ impl Socket {
     }
 
     // TODO: Implement a lookup table
-    pub fn naming_lookup<'a>(&'a mut self, name: &str) -> Result<&'a str, Error> {
+    pub fn naming_lookup(&mut self, name: &str) -> Result<String, Error> {
         let create_naming_lookup_msg = format!("NAMING LOOKUP NAME={name} \n", name = name);
-        try!(self.stream.write(&create_naming_lookup_msg.into_bytes()));
-
-        try!(read_line_parse(&self.stream, sam_naming_reply));
-
-        Ok("Test")
+        let ret = try!(self.send(create_naming_lookup_msg, sam_naming_reply));
+        Ok(ret.get("VALUE").unwrap().clone())
     }
+}
 
-    pub fn create_session<'b>(&'b mut self,
-                              destination: &str,
-                              nickname: &str,
-                              style: SessionStyle)
-                              -> Result<Stream<'b>, Error> {
+impl Session {
+    pub fn create(destination: &str, nickname: &str, style: SessionStyle) -> Result<Session, Error> {
+        let mut sam = SamConnection::connect("").unwrap();
         let create_session_msg = format!("SESSION CREATE STYLE={style} ID={nickname} DESTINATION={destination} \n",
                                          style = style.string(),
                                          nickname = nickname,
                                          destination = destination);
 
-        try!(self.stream.write(&create_session_msg.into_bytes()));
+        try!(sam.send(create_session_msg, sam_session_status));
 
-        try!(read_line_parse(&self.stream, sam_session_status));
-
-        Ok(Stream { socket: self })
+        Ok(Session { sam: sam })
     }
 }
 
