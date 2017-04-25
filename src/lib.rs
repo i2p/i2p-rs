@@ -3,6 +3,7 @@ extern crate nom;
 
 pub use sam::SamConnection;
 
+pub mod net;
 mod sam;
 mod parsers;
 
