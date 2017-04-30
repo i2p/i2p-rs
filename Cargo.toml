@@ -4,4 +4,5 @@ version = "0.1.0"
 authors = ["Jack Grigg <str4d@i2pmail.org>"]
 
 [dependencies]
+log = "0.3.7"
 nom = "^2.2"

@@ -1,9 +1,10 @@
 use nom::IResult;
-use parsers::{sam_hello, sam_naming_reply, sam_session_status};
+use parsers::{sam_hello, sam_naming_reply, sam_session_status, sam_stream_status};
 use std::clone::Clone;
 use std::collections::HashMap;
 use std::iter::FromIterator;
-use std::net::{TcpStream, ToSocketAddrs};
+use std::net::{SocketAddr, TcpStream, ToSocketAddrs};
+use std::io;
 use std::io::{Error, ErrorKind, BufReader};
 use std::io::prelude::*;
 
@@ -22,11 +23,13 @@ pub struct SamConnection {
 
 pub struct Session {
     sam: SamConnection,
+    local_dest: String,
 }
 
-pub struct Stream<'b> {
+pub struct Stream {
     sam: SamConnection,
-    session: &'b Session,
+    session: Session,
+    peer_dest: String,
 }
 
 impl SessionStyle {
@@ -62,11 +65,13 @@ impl SamConnection {
     fn send<F>(&mut self, msg: String, reply_parser: F) -> Result<HashMap<String, String>, Error>
         where F: Fn(&str) -> IResult<&str, Vec<(&str, &str)>>
     {
+        debug!("-> {}", &msg);
         try!(self.conn.write(&msg.into_bytes()));
 
         let mut reader = BufReader::new(&self.conn);
         let mut buffer = String::new();
         try!(reader.read_line(&mut buffer));
+        debug!("<- {}", &buffer);
 
         let response = reply_parser(&buffer);
         let vec_opts = response.unwrap().1;
@@ -101,17 +106,77 @@ impl SamConnection {
 }
 
 impl Session {
-    pub fn create(destination: &str, nickname: &str, style: SessionStyle) -> Result<Session, Error> {
-        let mut sam = SamConnection::connect("").unwrap();
+    pub fn create<A: ToSocketAddrs>(sam_addr: A,
+                                    destination: &str,
+                                    nickname: &str,
+                                    style: SessionStyle)
+                                    -> Result<Session, Error> {
+        let mut sam = SamConnection::connect(sam_addr).unwrap();
         let create_session_msg = format!("SESSION CREATE STYLE={style} ID={nickname} DESTINATION={destination} \n",
                                          style = style.string(),
                                          nickname = nickname,
                                          destination = destination);
 
-        try!(sam.send(create_session_msg, sam_session_status));
+        sam.send(create_session_msg, sam_session_status)?;
 
-        Ok(Session { sam: sam })
+        let local_dest = sam.naming_lookup("ME")?;
+
+        Ok(Session {
+            sam: sam,
+            local_dest: local_dest,
+        })
+    }
+
+    pub fn sam_api(&self) -> io::Result<SocketAddr> {
+        self.sam.conn.peer_addr()
+    }
+
+    pub fn naming_lookup(&mut self, name: &str) -> io::Result<String> {
+        self.sam.naming_lookup(name)
     }
 }
 
-impl<'b> Stream<'b> {}
+impl Stream {
+    pub fn new<A: ToSocketAddrs>(sam_addr: A, destination: &str, port: u16, nickname: &str) -> io::Result<Stream> {
+        let mut session = Session::create(sam_addr, "TRANSIENT", &nickname, SessionStyle::Stream)?;
+
+        let mut sam = SamConnection::connect(session.sam_api()?).unwrap();
+        let create_stream_msg = format!("STREAM CONNECT ID={nickname} DESTINATION={destination} SILENT=false TO_PORT={port}\n",
+                                         nickname = nickname,
+                                         destination = destination,
+                                         port = port);
+
+        sam.send(create_stream_msg, sam_stream_status)?;
+
+        let peer_dest = session.naming_lookup(destination)?;
+
+        Ok(Stream {
+               sam: sam,
+               session: session,
+               peer_dest: peer_dest,
+           })
+    }
+
+    pub fn peer_addr(&self) -> io::Result<String> {
+        Ok(self.peer_dest.clone())
+    }
+
+    pub fn local_addr(&self) -> io::Result<String> {
+        Ok(self.session.local_dest.clone())
+    }
+}
+
+impl Read for Stream {
+    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+        self.sam.conn.read(buf)
+    }
+}
+
+impl Write for Stream {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        self.sam.conn.write(buf)
+    }
+    fn flush(&mut self) -> io::Result<()> {
+        self.sam.conn.flush()
+    }
+}
