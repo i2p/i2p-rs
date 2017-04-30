@@ -1,10 +1,11 @@
 use std::io::prelude::*;
 
-use rand;
-use rand::Rng;
 use std::fmt;
 use std::io;
 use std::net::{Shutdown, SocketAddr, ToSocketAddrs};
+
+use rand;
+use rand::Rng;
 
 use sam::Stream;
 

@@ -1,11 +1,14 @@
-use nom::IResult;
-use parsers::{sam_hello, sam_naming_reply, sam_session_status, sam_stream_status};
+use std::io::prelude::*;
+
 use std::clone::Clone;
 use std::collections::HashMap;
-use std::net::{Shutdown, SocketAddr, TcpStream, ToSocketAddrs};
 use std::io;
 use std::io::{Error, ErrorKind, BufReader};
-use std::io::prelude::*;
+use std::net::{Shutdown, SocketAddr, TcpStream, ToSocketAddrs};
+
+use nom::IResult;
+
+use parsers::{sam_hello, sam_naming_reply, sam_session_status, sam_stream_status};
 
 static SAM_MIN: &'static str = "3.0";
 static SAM_MAX: &'static str = "3.1";
