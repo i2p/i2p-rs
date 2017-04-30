@@ -1,7 +1,8 @@
 extern crate i2p;
 
 #[test]
-fn it_works() {
+#[ignore]
+fn naming_lookup() {
     use i2p::sam::SamConnection;
     let session = SamConnection::connect("127.0.0.1:7656");
     let mut foo = session.unwrap();
