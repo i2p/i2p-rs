@@ -2,6 +2,25 @@ use std::cmp::Ordering;
 use std::fmt;
 use std::hash;
 
+/// An I2P address, as a Destination, B32 address or hostname.
+///
+/// # Examples
+///
+/// Constructing from a hostname:
+///
+/// ```
+/// use i2p::net::I2pAddr;
+///
+/// I2pAddr::new("example.i2p");
+/// ```
+///
+/// Constructing from a B32 address:
+///
+/// ```
+/// use i2p::net::I2pAddr;
+///
+/// I2pAddr::new("abcdefghijklmnopqrstuvwxyz234567abcdefghijklmnopqrst.b32.i2p");
+/// ```
 pub struct I2pAddr {
     inner: String,
 }

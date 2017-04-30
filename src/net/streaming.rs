@@ -10,6 +10,25 @@ use rand::Rng;
 use net::{I2pAddr, I2pSocketAddr, ToI2pSocketAddrs};
 use sam::{DEFAULT_API, StreamConnect};
 
+/// A structure which represents an I2P stream between a local socket and a
+/// remote socket.
+///
+/// The socket will be closed when the value is dropped.
+///
+/// # Examples
+///
+/// ```no_run
+/// use std::io::prelude::*;
+/// use i2p::net::I2pStream;
+///
+/// {
+///     let mut stream = I2pStream::connect("example.i2p:34254").unwrap();
+///
+///     // ignore the Result
+///     let _ = stream.write(&[1]);
+///     let _ = stream.read(&mut [0; 128]); // ignore here too
+/// } // the stream is closed here
+/// ```
 pub struct I2pStream {
     inner: StreamConnect,
 }
@@ -53,6 +72,26 @@ pub struct I2pListener {}
 pub struct Incoming<'a> { listener: &'a I2pListener }
 
 impl I2pStream {
+    /// Opens a TCP-like connection to a remote host.
+    ///
+    /// `addr` is an address of the remote host. Anything which implements
+    /// `ToI2pSocketAddrs` trait can be supplied for the address; see this trait
+    /// documentation for concrete examples.
+    /// In case `ToI2pSocketAddrs::to_socket_addrs()` returns more than one
+    /// entry (which should never be the case), then the first valid and
+    /// reachable address is used.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use i2p::net::I2pStream;
+    ///
+    /// if let Ok(stream) = I2pStream::connect("example.i2p:8080") {
+    ///     println!("Connected to the server!");
+    /// } else {
+    ///     println!("Couldn't connect to server...");
+    /// }
+    /// ```
     pub fn connect<A: ToI2pSocketAddrs>(addr: A) -> io::Result<I2pStream> {
         I2pStream::connect_via(DEFAULT_API, addr)
     }
@@ -102,10 +141,44 @@ impl I2pStream {
         self.inner.local_addr().map(|(d, p)| I2pSocketAddr::new(I2pAddr::new(&d), p))
     }
 
+    /// Shuts down the read, write, or both halves of this connection.
+    ///
+    /// This function will cause all pending and future I/O on the specified
+    /// portions to return immediately with an appropriate value (see the
+    /// documentation of [`Shutdown`]).
+    ///
+    /// [`Shutdown`]: ../../std/net/enum.Shutdown.html
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use std::net::Shutdown;
+    /// use i2p::net::I2pStream;
+    ///
+    /// let stream = I2pStream::connect("127.0.0.1:8080")
+    ///                        .expect("Couldn't connect to the server...");
+    /// stream.shutdown(Shutdown::Both).expect("shutdown call failed");
+    /// ```
     pub fn shutdown(&self, how: Shutdown) -> io::Result<()> {
         self.inner.shutdown(how)
     }
 
+    /// Creates a new independently owned handle to the underlying socket.
+    ///
+    /// The returned `I2pStream` is a reference to the same stream that this
+    /// object references. Both handles will read and write the same stream of
+    /// data, and options set on one stream will be propagated to the other
+    /// stream.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use i2p::net::I2pStream;
+    ///
+    /// let stream = I2pStream::connect("example.i2p:8080")
+    ///                        .expect("Couldn't connect to the server...");
+    /// let stream_clone = stream.try_clone().expect("clone failed...");
+    /// ```
     pub fn try_clone(&self) -> io::Result<I2pStream> {
         self.inner.duplicate().map(|s| I2pStream { inner: s })
     }
