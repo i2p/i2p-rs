@@ -8,7 +8,7 @@ use rand;
 use rand::Rng;
 
 use net::{I2pAddr, I2pSocketAddr, ToI2pSocketAddrs};
-use sam::StreamConnect;
+use sam::{DEFAULT_API, StreamConnect};
 
 pub struct I2pStream {
     inner: StreamConnect,
@@ -16,7 +16,7 @@ pub struct I2pStream {
 
 impl I2pStream {
     pub fn connect<A: ToI2pSocketAddrs>(addr: A) -> io::Result<I2pStream> {
-        I2pStream::connect_via("127.0.0.1:7656", addr)
+        I2pStream::connect_via(DEFAULT_API, addr)
     }
 
     pub fn connect_via<A: ToSocketAddrs, B: ToI2pSocketAddrs>(sam_addr: A, addr: B) -> io::Result<I2pStream> {

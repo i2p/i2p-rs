@@ -10,6 +10,8 @@ use nom::IResult;
 
 use parsers::{sam_hello, sam_naming_reply, sam_session_status, sam_stream_status};
 
+pub static DEFAULT_API: &'static str = "127.0.0.1:7656";
+
 static SAM_MIN: &'static str = "3.0";
 static SAM_MAX: &'static str = "3.1";
 
