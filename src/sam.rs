@@ -2,7 +2,6 @@ use nom::IResult;
 use parsers::{sam_hello, sam_naming_reply, sam_session_status, sam_stream_status};
 use std::clone::Clone;
 use std::collections::HashMap;
-use std::iter::FromIterator;
 use std::net::{Shutdown, SocketAddr, TcpStream, ToSocketAddrs};
 use std::io;
 use std::io::{Error, ErrorKind, BufReader};
@@ -33,7 +32,7 @@ pub struct Stream {
 }
 
 impl SessionStyle {
-    fn string<'a>(&'a self) -> &'a str {
+    fn string(&self) -> &str {
         match *self {
             SessionStyle::Datagram => "DATAGRAM",
             SessionStyle::Raw => "RAW",
@@ -42,21 +41,20 @@ impl SessionStyle {
     }
 }
 
-fn verify_response<'a>(vec: &'a Vec<(&str, &str)>) -> Result<HashMap<&'a str, &'a str>, Error> {
-    let newVec = vec.clone();
-    let map: HashMap<&str, &str> = newVec.iter().map(|&(k, v)| (k, v)).collect();
+fn verify_response<'a>(vec: &'a [(&str, &str)]) -> Result<HashMap<&'a str, &'a str>, Error> {
+    let new_vec = vec.clone();
+    let map: HashMap<&str, &str> = new_vec.iter().map(|&(k, v)| (k, v)).collect();
     let res = map.get("RESULT").unwrap_or(&"OK").clone();
     let msg = map.get("MESSAGE").unwrap_or(&"").clone();
     match res {
         "OK" => Ok(map),
-        "CANT_REACH_PEER" => Err(Error::new(ErrorKind::NotFound, msg)),
-        "DUPLICATED_DEST" => Err(Error::new(ErrorKind::AddrInUse, msg)),
-        "I2P_ERROR" => Err(Error::new(ErrorKind::Other, msg)),
-        "INVALID_KEY" => Err(Error::new(ErrorKind::InvalidInput, msg)),
-        "KEY_NOT_FOUND" => Err(Error::new(ErrorKind::NotFound, msg)),
+        "CANT_REACH_PEER" |
+        "KEY_NOT_FOUND" |
         "PEER_NOT_FOUND" => Err(Error::new(ErrorKind::NotFound, msg)),
-        "INVALID_ID" => Err(Error::new(ErrorKind::InvalidInput, msg)),
+        "DUPLICATED_DEST" => Err(Error::new(ErrorKind::AddrInUse, msg)),
+        "INVALID_KEY" | "INVALID_ID" => Err(Error::new(ErrorKind::InvalidInput, msg)),
         "TIMEOUT" => Err(Error::new(ErrorKind::TimedOut, msg)),
+        "I2P_ERROR" => Err(Error::new(ErrorKind::Other, msg)),
         _ => Err(Error::new(ErrorKind::Other, msg)),
     }
 }
@@ -66,11 +64,11 @@ impl SamConnection {
         where F: Fn(&str) -> IResult<&str, Vec<(&str, &str)>>
     {
         debug!("-> {}", &msg);
-        try!(self.conn.write(&msg.into_bytes()));
+        self.conn.write_all(&msg.into_bytes())?;
 
         let mut reader = BufReader::new(&self.conn);
         let mut buffer = String::new();
-        try!(reader.read_line(&mut buffer));
+        reader.read_line(&mut buffer)?;
         debug!("<- {}", &buffer);
 
         let response = reply_parser(&buffer);
@@ -90,11 +88,11 @@ impl SamConnection {
     }
 
     pub fn connect<A: ToSocketAddrs>(addr: A) -> Result<SamConnection, Error> {
-        let tcp_stream = try!(TcpStream::connect(addr));
+        let tcp_stream = TcpStream::connect(addr)?;
 
         let mut socket = SamConnection { conn: tcp_stream };
 
-        try!(socket.handshake());
+        socket.handshake()?;
 
         Ok(socket)
     }
@@ -102,8 +100,8 @@ impl SamConnection {
     // TODO: Implement a lookup table
     pub fn naming_lookup(&mut self, name: &str) -> Result<String, Error> {
         let create_naming_lookup_msg = format!("NAMING LOOKUP NAME={name} \n", name = name);
-        let ret = try!(self.send(create_naming_lookup_msg, sam_naming_reply));
-        Ok(ret.get("VALUE").unwrap().clone())
+        let ret = self.send(create_naming_lookup_msg, sam_naming_reply)?;
+        Ok(ret["VALUE"].clone())
     }
 
     pub fn duplicate(&self) -> io::Result<SamConnection> {
@@ -155,7 +153,7 @@ impl Session {
 
 impl Stream {
     pub fn new<A: ToSocketAddrs>(sam_addr: A, destination: &str, port: u16, nickname: &str) -> io::Result<Stream> {
-        let mut session = Session::create(sam_addr, "TRANSIENT", &nickname, SessionStyle::Stream)?;
+        let mut session = Session::create(sam_addr, "TRANSIENT", nickname, SessionStyle::Stream)?;
 
         let mut sam = SamConnection::connect(session.sam_api()?).unwrap();
         let create_stream_msg = format!("STREAM CONNECT ID={nickname} DESTINATION={destination} SILENT=false TO_PORT={port}\n",

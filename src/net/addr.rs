@@ -214,7 +214,7 @@ impl<'a> ToI2pSocketAddrs for (&'a str, u16) {
     fn to_socket_addrs(&self) -> io::Result<vec::IntoIter<I2pSocketAddr>> {
         let (host, port) = *self;
         let addr = I2pSocketAddr::new(I2pAddr::new(host), port);
-        return Ok(vec![addr].into_iter());
+        Ok(vec![addr].into_iter())
     }
 }
 

@@ -23,7 +23,6 @@ fn print_homepage(host: &str, port: u16) {
 fn main() {
     let args: Vec<String> = env::args().collect();
     match args.len() {
-        1 => help(),
         2 => print_homepage(&args[1], 80),
         3 => {
             let host = &args[1];
