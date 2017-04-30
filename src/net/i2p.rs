@@ -17,9 +17,7 @@ impl I2pAddr {
     /// let addr = I2pAddr::new("example.i2p");
     /// ```
     pub fn new(dest: &str) -> I2pAddr {
-        I2pAddr {
-            inner: dest.to_string()
-        }
+        I2pAddr { inner: dest.to_string() }
     }
 
     /// Returns the String that makes up this address.
@@ -35,7 +33,6 @@ impl I2pAddr {
     pub fn string(&self) -> String {
         self.inner.clone()
     }
-
 }
 
 impl fmt::Display for I2pAddr {
@@ -51,7 +48,9 @@ impl fmt::Debug for I2pAddr {
 }
 
 impl Clone for I2pAddr {
-    fn clone(&self) -> I2pAddr { I2pAddr::new(&self.inner) }
+    fn clone(&self) -> I2pAddr {
+        I2pAddr::new(&self.inner)
+    }
 }
 
 impl PartialEq for I2pAddr {

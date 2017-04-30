@@ -104,13 +104,14 @@ impl fmt::Debug for I2pSocketAddr {
 }
 
 impl Clone for I2pSocketAddr {
-    fn clone(&self) -> I2pSocketAddr { I2pSocketAddr::new(self.dest.clone(), self.port) }
+    fn clone(&self) -> I2pSocketAddr {
+        I2pSocketAddr::new(self.dest.clone(), self.port)
+    }
 }
 
 impl PartialEq for I2pSocketAddr {
     fn eq(&self, other: &I2pSocketAddr) -> bool {
-        self.port == other.port &&
-            self.dest == other.dest
+        self.port == other.port && self.dest == other.dest
     }
 }
 impl Eq for I2pSocketAddr {}
@@ -177,7 +178,7 @@ impl hash::Hash for I2pSocketAddr {
 pub trait ToI2pSocketAddrs {
     /// Returned iterator over socket addresses which this type may correspond
     /// to.
-    type Iter: Iterator<Item=I2pSocketAddr>;
+    type Iter: Iterator<Item = I2pSocketAddr>;
 
     /// Converts this object to an iterator of resolved `I2pSocketAddr`s.
     ///
@@ -213,7 +214,7 @@ impl<'a> ToI2pSocketAddrs for (&'a str, u16) {
     fn to_socket_addrs(&self) -> io::Result<vec::IntoIter<I2pSocketAddr>> {
         let (host, port) = *self;
         let addr = I2pSocketAddr::new(I2pAddr::new(host), port);
-        return Ok(vec![addr].into_iter())
+        return Ok(vec![addr].into_iter());
     }
 }
 
@@ -296,9 +297,12 @@ mod tests {
     #[test]
     fn to_socket_addr_string() {
         let a = isa(I2pAddr::new("example.i2p"), 24352);
-        assert_eq!(Ok(vec![a.clone()]), tsa(&*format!("{}:{}", "example.i2p", "24352")));
-        assert_eq!(Ok(vec![a.clone()]), tsa(&format!("{}:{}", "example.i2p", "24352")));
-        assert_eq!(Ok(vec![a.clone()]), tsa(format!("{}:{}", "example.i2p", "24352")));
+        assert_eq!(Ok(vec![a.clone()]),
+                   tsa(&*format!("{}:{}", "example.i2p", "24352")));
+        assert_eq!(Ok(vec![a.clone()]),
+                   tsa(&format!("{}:{}", "example.i2p", "24352")));
+        assert_eq!(Ok(vec![a.clone()]),
+                   tsa(format!("{}:{}", "example.i2p", "24352")));
 
         let s = format!("{}:{}", "example.i2p", "24352");
         assert_eq!(Ok(vec![a]), tsa(s));
@@ -307,7 +311,9 @@ mod tests {
 
     #[test]
     fn set_dest() {
-        fn i2p(low: u8) -> I2pAddr { I2pAddr::new(&format!("example{}.i2p", low)) }
+        fn i2p(low: u8) -> I2pAddr {
+            I2pAddr::new(&format!("example{}.i2p", low))
+        }
 
         let mut addr = I2pSocketAddr::new(i2p(12), 80);
         assert_eq!(addr.dest(), i2p(12));

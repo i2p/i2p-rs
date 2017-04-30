@@ -48,16 +48,16 @@ fn verify_response<'a>(vec: &'a Vec<(&str, &str)>) -> Result<HashMap<&'a str, &'
     let res = map.get("RESULT").unwrap_or(&"OK").clone();
     let msg = map.get("MESSAGE").unwrap_or(&"").clone();
     match res {
-        "OK"               => Ok(map),
-        "CANT_REACH_PEER"  => Err(Error::new(ErrorKind::NotFound, msg)),
-        "DUPLICATED_DEST"  => Err(Error::new(ErrorKind::AddrInUse, msg)),
-        "I2P_ERROR"        => Err(Error::new(ErrorKind::Other, msg)),
-        "INVALID_KEY"      => Err(Error::new(ErrorKind::InvalidInput, msg)),
-        "KEY_NOT_FOUND"    => Err(Error::new(ErrorKind::NotFound, msg)),
-        "PEER_NOT_FOUND"   => Err(Error::new(ErrorKind::NotFound, msg)),
-        "INVALID_ID"       => Err(Error::new(ErrorKind::InvalidInput, msg)),
-        "TIMEOUT"          => Err(Error::new(ErrorKind::TimedOut, msg)),
-        _                   => Err(Error::new(ErrorKind::Other, msg)),
+        "OK" => Ok(map),
+        "CANT_REACH_PEER" => Err(Error::new(ErrorKind::NotFound, msg)),
+        "DUPLICATED_DEST" => Err(Error::new(ErrorKind::AddrInUse, msg)),
+        "I2P_ERROR" => Err(Error::new(ErrorKind::Other, msg)),
+        "INVALID_KEY" => Err(Error::new(ErrorKind::InvalidInput, msg)),
+        "KEY_NOT_FOUND" => Err(Error::new(ErrorKind::NotFound, msg)),
+        "PEER_NOT_FOUND" => Err(Error::new(ErrorKind::NotFound, msg)),
+        "INVALID_ID" => Err(Error::new(ErrorKind::InvalidInput, msg)),
+        "TIMEOUT" => Err(Error::new(ErrorKind::TimedOut, msg)),
+        _ => Err(Error::new(ErrorKind::Other, msg)),
     }
 }
 
@@ -76,8 +76,10 @@ impl SamConnection {
         let response = reply_parser(&buffer);
         let vec_opts = response.unwrap().1;
         verify_response(&vec_opts).map(|m| {
-            m.iter().map(|(k, v)| (k.to_string(), v.to_string())).collect()
-        })
+                                           m.iter()
+                                               .map(|(k, v)| (k.to_string(), v.to_string()))
+                                               .collect()
+                                       })
     }
 
     fn handshake(&mut self) -> Result<HashMap<String, String>, Error> {
@@ -126,9 +128,9 @@ impl Session {
         let local_dest = sam.naming_lookup("ME")?;
 
         Ok(Session {
-            sam: sam,
-            local_dest: local_dest,
-        })
+               sam: sam,
+               local_dest: local_dest,
+           })
     }
 
     pub fn sam_api(&self) -> io::Result<SocketAddr> {
@@ -140,7 +142,14 @@ impl Session {
     }
 
     pub fn duplicate(&self) -> io::Result<Session> {
-        self.sam.duplicate().map(|s| Session { sam: s, local_dest: self.local_dest.clone() })
+        self.sam
+            .duplicate()
+            .map(|s| {
+                     Session {
+                         sam: s,
+                         local_dest: self.local_dest.clone(),
+                     }
+                 })
     }
 }
 
@@ -179,10 +188,10 @@ impl Stream {
 
     pub fn duplicate(&self) -> io::Result<Stream> {
         Ok(Stream {
-            sam: self.sam.duplicate()?,
-            session: self.session.duplicate()?,
-            peer_dest: self.peer_dest.clone(),
-        })
+               sam: self.sam.duplicate()?,
+               session: self.session.duplicate()?,
+               peer_dest: self.peer_dest.clone(),
+           })
     }
 }
 

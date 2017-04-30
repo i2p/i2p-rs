@@ -25,9 +25,9 @@ fn each_addr<A: ToI2pSocketAddrs, F, T>(addr: A, mut f: F) -> io::Result<T>
         }
     }
     Err(last_err.unwrap_or_else(|| {
-        io::Error::new(io::ErrorKind::InvalidInput,
-                   "could not resolve to any addresses")
-    }))
+                                    io::Error::new(io::ErrorKind::InvalidInput,
+                                                   "could not resolve to any addresses")
+                                }))
 }
 
 pub struct I2pStream {
@@ -40,7 +40,10 @@ impl I2pStream {
     }
 
     fn connect_addr(addr: &I2pSocketAddr) -> io::Result<I2pStream> {
-        let stream = Stream::new("127.0.0.1:7656", &addr.dest().string(), addr.port(), "foobar")?;
+        let stream = Stream::new("127.0.0.1:7656",
+                                 &addr.dest().string(),
+                                 addr.port(),
+                                 "foobar")?;
 
         Ok(I2pStream { inner: stream })
     }
