@@ -2,6 +2,16 @@
 name = "i2p"
 version = "0.1.0"
 authors = ["Jack Grigg <str4d@i2pmail.org>"]
+description = "I2P client library with a std::net-like API"
+homepage = "https://github.com/i2p/i2p-rs"
+repository = "https://github.com/i2p/i2p-rs"
+readme = "README.md"
+categories = ["network-programming"]
+keywords = ["i2p", "net", "network", "sam"]
+license = "MIT"
+
+[badges]
+travis-ci = { repository = "https://github.com/i2p/i2p-rs" }
 
 [dependencies]
 log = "0.3.7"
