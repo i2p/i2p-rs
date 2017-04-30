@@ -2,7 +2,7 @@ use std::io::prelude::*;
 
 use std::fmt;
 use std::io;
-use std::net::Shutdown;
+use std::net::{Shutdown, SocketAddr, ToSocketAddrs};
 
 use sam::Stream;
 
@@ -14,14 +14,16 @@ mod i2p;
 #[cfg(test)]
 mod test;
 
-fn each_addr<A: ToI2pSocketAddrs, F, T>(addr: A, mut f: F) -> io::Result<T>
-    where F: FnMut(&I2pSocketAddr) -> io::Result<T>
+fn each_addr<A: ToSocketAddrs, B: ToI2pSocketAddrs, F, T>(sam_addr: A, addr: B, mut f: F) -> io::Result<T>
+    where F: FnMut(&SocketAddr, &I2pSocketAddr) -> io::Result<T>
 {
     let mut last_err = None;
     for addr in addr.to_socket_addrs()? {
-        match f(&addr) {
-            Ok(l) => return Ok(l),
-            Err(e) => last_err = Some(e),
+        for sam_addr in sam_addr.to_socket_addrs()? {
+            match f(&sam_addr, &addr) {
+                Ok(l) => return Ok(l),
+                Err(e) => last_err = Some(e),
+            }
         }
     }
     Err(last_err.unwrap_or_else(|| {
@@ -36,11 +38,15 @@ pub struct I2pStream {
 
 impl I2pStream {
     pub fn connect<A: ToI2pSocketAddrs>(addr: A) -> io::Result<I2pStream> {
-        each_addr(addr, I2pStream::connect_addr)
+        I2pStream::connect_via("127.0.0.1:7656", addr)
     }
 
-    fn connect_addr(addr: &I2pSocketAddr) -> io::Result<I2pStream> {
-        let stream = Stream::new("127.0.0.1:7656",
+    pub fn connect_via<A: ToSocketAddrs, B: ToI2pSocketAddrs>(sam_addr: A, addr: B) -> io::Result<I2pStream> {
+        each_addr(sam_addr, addr, I2pStream::connect_addr)
+    }
+
+    fn connect_addr(sam_addr: &SocketAddr, addr: &I2pSocketAddr) -> io::Result<I2pStream> {
+        let stream = Stream::new(sam_addr,
                                  &addr.dest().string(),
                                  addr.port(),
                                  "foobar")?;
