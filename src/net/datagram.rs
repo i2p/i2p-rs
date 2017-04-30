@@ -4,6 +4,8 @@ use std::net::{SocketAddr, ToSocketAddrs};
 use net::{I2pAddr, I2pSocketAddr, ToI2pSocketAddrs};
 use sam::DEFAULT_API;
 
+/// Unimplemented
+///
 /// An I2P datagram socket.
 ///
 /// This is an implementation of a bound datagram socket. There is no

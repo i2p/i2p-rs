@@ -33,6 +33,8 @@ pub struct I2pStream {
     inner: StreamConnect,
 }
 
+/// Unimplemented
+///
 /// A structure representing a socket server.
 ///
 /// # Examples
