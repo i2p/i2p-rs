@@ -8,10 +8,10 @@ use rand;
 use rand::Rng;
 
 use net::{I2pAddr, I2pSocketAddr, ToI2pSocketAddrs};
-use sam::Stream;
+use sam::StreamConnect;
 
 pub struct I2pStream {
-    inner: Stream,
+    inner: StreamConnect,
 }
 
 impl I2pStream {
@@ -27,7 +27,7 @@ impl I2pStream {
         let suffix: String = rand::thread_rng().gen_ascii_chars().take(8).collect();
         let nickname = format!("i2prs-{}", suffix);
 
-        let stream = Stream::new(sam_addr, &addr.dest().string(), addr.port(), &nickname)?;
+        let stream = StreamConnect::new(sam_addr, &addr.dest().string(), addr.port(), &nickname)?;
 
         Ok(I2pStream { inner: stream })
     }

@@ -28,7 +28,7 @@ pub struct Session {
     local_dest: String,
 }
 
-pub struct Stream {
+pub struct StreamConnect {
     sam: SamConnection,
     session: Session,
     peer_dest: String,
@@ -162,8 +162,13 @@ impl Session {
     }
 }
 
-impl Stream {
-    pub fn new<A: ToSocketAddrs>(sam_addr: A, destination: &str, port: u16, nickname: &str) -> io::Result<Stream> {
+impl StreamConnect {
+    pub fn new<A: ToSocketAddrs>(
+        sam_addr: A,
+        destination: &str,
+        port: u16,
+        nickname: &str,
+    ) -> io::Result<StreamConnect> {
         let mut session = Session::create(sam_addr, "TRANSIENT", nickname, SessionStyle::Stream)?;
 
         let mut sam = SamConnection::connect(session.sam_api()?).unwrap();
@@ -177,7 +182,7 @@ impl Stream {
         let peer_dest = session.naming_lookup(destination)?;
 
         Ok(
-            Stream {
+            StreamConnect {
                 sam: sam,
                 session: session,
                 peer_dest: peer_dest,
@@ -197,9 +202,9 @@ impl Stream {
         self.sam.conn.shutdown(how)
     }
 
-    pub fn duplicate(&self) -> io::Result<Stream> {
+    pub fn duplicate(&self) -> io::Result<StreamConnect> {
         Ok(
-            Stream {
+            StreamConnect {
                 sam: self.sam.duplicate()?,
                 session: self.session.duplicate()?,
                 peer_dest: self.peer_dest.clone(),
@@ -208,13 +213,13 @@ impl Stream {
     }
 }
 
-impl Read for Stream {
+impl Read for StreamConnect {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         self.sam.conn.read(buf)
     }
 }
 
-impl Write for Stream {
+impl Write for StreamConnect {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         self.sam.conn.write(buf)
     }
