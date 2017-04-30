@@ -17,7 +17,8 @@ mod i2p;
 mod test;
 
 fn each_addr<A: ToSocketAddrs, B: ToI2pSocketAddrs, F, T>(sam_addr: A, addr: B, mut f: F) -> io::Result<T>
-    where F: FnMut(&SocketAddr, &I2pSocketAddr) -> io::Result<T>
+where
+    F: FnMut(&SocketAddr, &I2pSocketAddr) -> io::Result<T>,
 {
     let mut last_err = None;
     for addr in addr.to_socket_addrs()? {
@@ -28,10 +29,16 @@ fn each_addr<A: ToSocketAddrs, B: ToI2pSocketAddrs, F, T>(sam_addr: A, addr: B, 
             }
         }
     }
-    Err(last_err.unwrap_or_else(|| {
-                                    io::Error::new(io::ErrorKind::InvalidInput,
-                                                   "could not resolve to any addresses")
-                                }))
+    Err(
+        last_err.unwrap_or_else(
+            || {
+                io::Error::new(
+                    io::ErrorKind::InvalidInput,
+                    "could not resolve to any addresses",
+                )
+            },
+        ),
+    )
 }
 
 pub struct I2pStream {

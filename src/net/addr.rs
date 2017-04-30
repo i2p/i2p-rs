@@ -297,12 +297,18 @@ mod tests {
     #[test]
     fn to_socket_addr_string() {
         let a = isa(I2pAddr::new("example.i2p"), 24352);
-        assert_eq!(Ok(vec![a.clone()]),
-                   tsa(&*format!("{}:{}", "example.i2p", "24352")));
-        assert_eq!(Ok(vec![a.clone()]),
-                   tsa(&format!("{}:{}", "example.i2p", "24352")));
-        assert_eq!(Ok(vec![a.clone()]),
-                   tsa(format!("{}:{}", "example.i2p", "24352")));
+        assert_eq!(
+            Ok(vec![a.clone()]),
+            tsa(&*format!("{}:{}", "example.i2p", "24352"))
+        );
+        assert_eq!(
+            Ok(vec![a.clone()]),
+            tsa(&format!("{}:{}", "example.i2p", "24352"))
+        );
+        assert_eq!(
+            Ok(vec![a.clone()]),
+            tsa(format!("{}:{}", "example.i2p", "24352"))
+        );
 
         let s = format!("{}:{}", "example.i2p", "24352");
         assert_eq!(Ok(vec![a]), tsa(s));

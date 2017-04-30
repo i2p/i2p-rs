@@ -61,7 +61,8 @@ fn verify_response<'a>(vec: &'a [(&str, &str)]) -> Result<HashMap<&'a str, &'a s
 
 impl SamConnection {
     fn send<F>(&mut self, msg: String, reply_parser: F) -> Result<HashMap<String, String>, Error>
-        where F: Fn(&str) -> IResult<&str, Vec<(&str, &str)>>
+    where
+        F: Fn(&str) -> IResult<&str, Vec<(&str, &str)>>,
     {
         debug!("-> {}", &msg);
         self.conn.write_all(&msg.into_bytes())?;
@@ -73,11 +74,13 @@ impl SamConnection {
 
         let response = reply_parser(&buffer);
         let vec_opts = response.unwrap().1;
-        verify_response(&vec_opts).map(|m| {
-                                           m.iter()
-                                               .map(|(k, v)| (k.to_string(), v.to_string()))
-                                               .collect()
-                                       })
+        verify_response(&vec_opts).map(
+            |m| {
+                m.iter()
+                    .map(|(k, v)| (k.to_string(), v.to_string()))
+                    .collect()
+            },
+        )
     }
 
     fn handshake(&mut self) -> Result<HashMap<String, String>, Error> {
@@ -110,11 +113,12 @@ impl SamConnection {
 }
 
 impl Session {
-    pub fn create<A: ToSocketAddrs>(sam_addr: A,
-                                    destination: &str,
-                                    nickname: &str,
-                                    style: SessionStyle)
-                                    -> Result<Session, Error> {
+    pub fn create<A: ToSocketAddrs>(
+        sam_addr: A,
+        destination: &str,
+        nickname: &str,
+        style: SessionStyle,
+    ) -> Result<Session, Error> {
         let mut sam = SamConnection::connect(sam_addr).unwrap();
         let create_session_msg = format!("SESSION CREATE STYLE={style} ID={nickname} DESTINATION={destination} \n",
                                          style = style.string(),
@@ -125,10 +129,12 @@ impl Session {
 
         let local_dest = sam.naming_lookup("ME")?;
 
-        Ok(Session {
-               sam: sam,
-               local_dest: local_dest,
-           })
+        Ok(
+            Session {
+                sam: sam,
+                local_dest: local_dest,
+            },
+        )
     }
 
     pub fn sam_api(&self) -> io::Result<SocketAddr> {
@@ -142,12 +148,14 @@ impl Session {
     pub fn duplicate(&self) -> io::Result<Session> {
         self.sam
             .duplicate()
-            .map(|s| {
-                     Session {
-                         sam: s,
-                         local_dest: self.local_dest.clone(),
-                     }
-                 })
+            .map(
+                |s| {
+                    Session {
+                        sam: s,
+                        local_dest: self.local_dest.clone(),
+                    }
+                },
+            )
     }
 }
 
@@ -165,11 +173,13 @@ impl Stream {
 
         let peer_dest = session.naming_lookup(destination)?;
 
-        Ok(Stream {
-               sam: sam,
-               session: session,
-               peer_dest: peer_dest,
-           })
+        Ok(
+            Stream {
+                sam: sam,
+                session: session,
+                peer_dest: peer_dest,
+            },
+        )
     }
 
     pub fn peer_addr(&self) -> io::Result<String> {
@@ -185,11 +195,13 @@ impl Stream {
     }
 
     pub fn duplicate(&self) -> io::Result<Stream> {
-        Ok(Stream {
-               sam: self.sam.duplicate()?,
-               session: self.session.duplicate()?,
-               peer_dest: self.peer_dest.clone(),
-           })
+        Ok(
+            Stream {
+                sam: self.sam.duplicate()?,
+                session: self.session.duplicate()?,
+                peer_dest: self.peer_dest.clone(),
+            },
+        )
     }
 }
 

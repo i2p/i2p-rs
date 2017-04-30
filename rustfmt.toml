@@ -1,2 +1,7 @@
+array_layout = "Block"
+generics_indent = "Block"
+fn_args_layout = "Block"
+fn_call_style = "Block"
 max_width = 115
+where_style = "Rfc"
 write_mode = "overwrite"
