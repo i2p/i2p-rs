@@ -162,8 +162,8 @@ impl hash::Hash for I2pSocketAddr {
 ///     let port = 12345;
 ///
 ///     // The following lines are equivalent
-///     let i2p_s = I2pStream::connect(I2pSocketAddr::new(dest, port));
-///     let i2p_s = I2pStream::connect((dest, port));
+///     let i2p_s = I2pStream::connect(I2pSocketAddr::new(dest.clone(), port));
+///     let i2p_s = I2pStream::connect((dest.clone(), port));
 ///     let i2p_s = I2pStream::connect(("example.i2p", port));
 ///     let i2p_s = I2pStream::connect("example.i2p:12345");
 ///
