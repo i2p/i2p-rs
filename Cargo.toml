@@ -6,3 +6,4 @@ authors = ["Jack Grigg <str4d@i2pmail.org>"]
 [dependencies]
 log = "0.3.7"
 nom = "^2.2"
+rand = "0.3.15"

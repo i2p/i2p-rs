@@ -1,5 +1,7 @@
 use std::io::prelude::*;
 
+use rand;
+use rand::Rng;
 use std::fmt;
 use std::io;
 use std::net::{Shutdown, SocketAddr, ToSocketAddrs};
@@ -46,10 +48,10 @@ impl I2pStream {
     }
 
     fn connect_addr(sam_addr: &SocketAddr, addr: &I2pSocketAddr) -> io::Result<I2pStream> {
-        let stream = Stream::new(sam_addr,
-                                 &addr.dest().string(),
-                                 addr.port(),
-                                 "foobar")?;
+        let suffix: String = rand::thread_rng().gen_ascii_chars().take(8).collect();
+        let nickname = format!("i2prs-{}", suffix);
+
+        let stream = Stream::new(sam_addr, &addr.dest().string(), addr.port(), &nickname)?;
 
         Ok(I2pStream { inner: stream })
     }
