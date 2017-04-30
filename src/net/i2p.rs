@@ -7,16 +7,14 @@ pub struct I2pAddr {
 }
 
 impl I2pAddr {
-    /// Creates a new I2p address from four eight-bit octets.
-    ///
-    /// The result will represent the IP address `a`.`b`.`c`.`d`.
+    /// Creates a new I2p address from a given string.
     ///
     /// # Examples
     ///
     /// ```
-    /// use std::net::Ipv4Addr;
+    /// use i2p::net::I2pAddr;
     ///
-    /// let addr = Ipv4Addr::new(127, 0, 0, 1);
+    /// let addr = I2pAddr::new("example.i2p");
     /// ```
     pub fn new(dest: &str) -> I2pAddr {
         I2pAddr {
