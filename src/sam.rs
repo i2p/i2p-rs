@@ -34,6 +34,8 @@ pub struct StreamConnect {
     sam: SamConnection,
     session: Session,
     peer_dest: String,
+    peer_port: u16,
+    local_port: u16,
 }
 
 impl SessionStyle {
@@ -188,16 +190,18 @@ impl StreamConnect {
                 sam: sam,
                 session: session,
                 peer_dest: peer_dest,
+                peer_port: port,
+                local_port: 0,
             },
         )
     }
 
-    pub fn peer_addr(&self) -> io::Result<String> {
-        Ok(self.peer_dest.clone())
+    pub fn peer_addr(&self) -> io::Result<(String, u16)> {
+        Ok((self.peer_dest.clone(), self.peer_port))
     }
 
-    pub fn local_addr(&self) -> io::Result<String> {
-        Ok(self.session.local_dest.clone())
+    pub fn local_addr(&self) -> io::Result<(String, u16)> {
+        Ok((self.session.local_dest.clone(), self.local_port))
     }
 
     pub fn shutdown(&self, how: Shutdown) -> io::Result<()> {
@@ -210,6 +214,8 @@ impl StreamConnect {
                 sam: self.sam.duplicate()?,
                 session: self.session.duplicate()?,
                 peer_dest: self.peer_dest.clone(),
+                peer_port: self.peer_port,
+                local_port: self.local_port,
             },
         )
     }

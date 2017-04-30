@@ -70,12 +70,36 @@ impl I2pStream {
         Ok(I2pStream { inner: stream })
     }
 
-    pub fn peer_addr(&self) -> io::Result<I2pAddr> {
-        self.inner.peer_addr().map(|a| I2pAddr::new(&a))
+    /// Returns the socket address of the remote peer of this I2P connection.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use i2p::net::{I2pAddr, I2pSocketAddr, I2pStream};
+    ///
+    /// let stream = I2pStream::connect("example.i2p:8080")
+    ///                        .expect("Couldn't connect to the server...");
+    /// assert_eq!(stream.peer_addr().unwrap(),
+    ///            I2pSocketAddr::new(I2pAddr::new("example.i2p"), 8080));
+    /// ```
+    pub fn peer_addr(&self) -> io::Result<I2pSocketAddr> {
+        self.inner.peer_addr().map(|(d, p)| I2pSocketAddr::new(I2pAddr::new(&d), p))
     }
 
-    pub fn local_addr(&self) -> io::Result<I2pAddr> {
-        self.inner.local_addr().map(|a| I2pAddr::new(&a))
+    /// Returns the socket address of the local half of this I2P connection.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use i2p::net::{I2pAddr, I2pSocketAddr, I2pStream};
+    ///
+    /// let stream = I2pStream::connect("example.i2p:8080")
+    ///                        .expect("Couldn't connect to the server...");
+    /// assert_eq!(stream.local_addr().unwrap(),
+    ///            I2pSocketAddr::new(I2pAddr::new("example.i2p"), 8080));
+    /// ```
+    pub fn local_addr(&self) -> io::Result<I2pSocketAddr> {
+        self.inner.local_addr().map(|(d, p)| I2pSocketAddr::new(I2pAddr::new(&d), p))
     }
 
     pub fn shutdown(&self, how: Shutdown) -> io::Result<()> {
