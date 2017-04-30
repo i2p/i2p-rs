@@ -3,9 +3,11 @@ use std::net::{SocketAddr, ToSocketAddrs};
 
 pub use self::addr::{I2pSocketAddr, ToI2pSocketAddrs};
 pub use self::i2p::I2pAddr;
-pub use self::streaming::I2pStream;
+pub use self::streaming::{I2pStream, I2pListener};
+pub use self::datagram::I2pDatagramSocket;
 
 mod addr;
+mod datagram;
 mod i2p;
 mod streaming;
 #[cfg(test)]
