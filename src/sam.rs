@@ -3,7 +3,7 @@ use parsers::{sam_hello, sam_naming_reply, sam_session_status, sam_stream_status
 use std::clone::Clone;
 use std::collections::HashMap;
 use std::iter::FromIterator;
-use std::net::{SocketAddr, TcpStream, ToSocketAddrs};
+use std::net::{Shutdown, SocketAddr, TcpStream, ToSocketAddrs};
 use std::io;
 use std::io::{Error, ErrorKind, BufReader};
 use std::io::prelude::*;
@@ -103,6 +103,10 @@ impl SamConnection {
         let ret = try!(self.send(create_naming_lookup_msg, sam_naming_reply));
         Ok(ret.get("VALUE").unwrap().clone())
     }
+
+    pub fn duplicate(&self) -> io::Result<SamConnection> {
+        self.conn.try_clone().map(|s| SamConnection { conn: s })
+    }
 }
 
 impl Session {
@@ -134,6 +138,10 @@ impl Session {
     pub fn naming_lookup(&mut self, name: &str) -> io::Result<String> {
         self.sam.naming_lookup(name)
     }
+
+    pub fn duplicate(&self) -> io::Result<Session> {
+        self.sam.duplicate().map(|s| Session { sam: s, local_dest: self.local_dest.clone() })
+    }
 }
 
 impl Stream {
@@ -163,6 +171,18 @@ impl Stream {
 
     pub fn local_addr(&self) -> io::Result<String> {
         Ok(self.session.local_dest.clone())
+    }
+
+    pub fn shutdown(&self, how: Shutdown) -> io::Result<()> {
+        self.sam.conn.shutdown(how)
+    }
+
+    pub fn duplicate(&self) -> io::Result<Stream> {
+        Ok(Stream {
+            sam: self.sam.duplicate()?,
+            session: self.session.duplicate()?,
+            peer_dest: self.peer_dest.clone(),
+        })
     }
 }
 

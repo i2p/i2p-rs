@@ -21,6 +21,21 @@ impl I2pAddr {
             inner: dest.to_string()
         }
     }
+
+    /// Returns the String that makes up this address.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use i2p::net::I2pAddr;
+    ///
+    /// let addr = I2pAddr::new("example.i2p");
+    /// assert_eq!(addr.string(), "example.i2p");
+    /// ```
+    pub fn string(&self) -> String {
+        self.inner.clone()
+    }
+
 }
 
 impl fmt::Display for I2pAddr {
