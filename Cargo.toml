@@ -1,6 +1,6 @@
 [package]
 name = "i2p"
-version = "0.0.1"
+version = "0.0.2"
 authors = ["Jack Grigg <str4d@i2pmail.org>"]
 description = "I2P client library with a std::net-like API"
 homepage = "https://github.com/i2p/i2p-rs"
@@ -9,11 +9,15 @@ readme = "README.md"
 categories = ["network-programming"]
 keywords = ["i2p", "net", "network", "sam"]
 license = "MIT"
+edition = "2018"
 
 [badges]
 travis-ci = { repository = "i2p/i2p-rs" }
 
 [dependencies]
-log = "0.3.7"
+log = "0.4.6"
 nom = "^2.2"
-rand = "0.3.15"
+rand = "0.5"
+
+[dev-dependencies]
+env_logger = "0.5"

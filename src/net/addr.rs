@@ -6,7 +6,7 @@ use std::option;
 use std::slice;
 use std::vec;
 
-use net::i2p::I2pAddr;
+use crate::net::i2p::I2pAddr;
 
 pub struct I2pSocketAddr {
     port: u16,

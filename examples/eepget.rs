@@ -1,4 +1,5 @@
 extern crate i2p;
+extern crate env_logger;
 
 use std::env;
 use std::io::{BufReader, Read, Write};
@@ -21,6 +22,7 @@ fn print_homepage(host: &str, port: u16) {
 }
 
 fn main() {
+    env_logger::init();
     let args: Vec<String> = env::args().collect();
     match args.len() {
         2 => print_homepage(&args[1], 80),

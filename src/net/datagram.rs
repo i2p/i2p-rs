@@ -1,8 +1,10 @@
+#![allow(dead_code)]
+
 use std::io::{self, Error, ErrorKind};
 use std::net::{SocketAddr, ToSocketAddrs};
 
-use net::{I2pAddr, I2pSocketAddr, ToI2pSocketAddrs};
-use sam::DEFAULT_API;
+use crate::net::{I2pSocketAddr, ToI2pSocketAddrs};
+use crate::sam::DEFAULT_API;
 
 /// Unimplemented
 ///
@@ -57,7 +59,7 @@ impl I2pDatagramSocket {
         super::each_addr(sam_addr, addr, I2pDatagramSocket::bind_addr)
     }
 
-    fn bind_addr(sam_addr: &SocketAddr, addr: &I2pSocketAddr) -> io::Result<I2pDatagramSocket> {
+    fn bind_addr(_sam_addr: &SocketAddr, _addr: &I2pSocketAddr) -> io::Result<I2pDatagramSocket> {
         unimplemented!();
     }
 
@@ -74,7 +76,7 @@ impl I2pDatagramSocket {
     /// let (number_of_bytes, src_addr) = socket.recv_from(&mut buf)
     ///                                         .expect("Didn't receive data");
     /// ```
-    pub fn recv_from(&self, buf: &mut [u8]) -> io::Result<(usize, I2pSocketAddr)> {
+    pub fn recv_from(&self, _buf: &mut [u8]) -> io::Result<(usize, I2pSocketAddr)> {
         unimplemented!()
     }
 
@@ -95,7 +97,7 @@ impl I2pDatagramSocket {
     /// let (number_of_bytes, src_addr) = socket.peek_from(&mut buf)
     ///                                         .expect("Didn't receive data");
     /// ```
-    pub fn peek_from(&self, buf: &mut [u8]) -> io::Result<(usize, I2pSocketAddr)> {
+    pub fn peek_from(&self, _buf: &mut [u8]) -> io::Result<(usize, I2pSocketAddr)> {
         unimplemented!()
     }
 
@@ -115,10 +117,10 @@ impl I2pDatagramSocket {
     /// let socket = I2pDatagramSocket::bind("127.0.0.1:34254").expect("couldn't bind to address");
     /// socket.send_to(&[0; 10], "127.0.0.1:4242").expect("couldn't send data");
     /// ```
-    pub fn send_to<A: ToI2pSocketAddrs>(&self, buf: &[u8], addr: A)
+    pub fn send_to<A: ToI2pSocketAddrs>(&self, _buf: &[u8], addr: A)
                                      -> io::Result<usize> {
         match addr.to_socket_addrs()?.next() {
-            Some(addr) => unimplemented!(),
+            Some(_addr) => unimplemented!(),
             None => Err(Error::new(ErrorKind::InvalidInput,
                                    "no addresses to send data to")),
         }
@@ -174,7 +176,7 @@ impl I2pDatagramSocket {
     }
 
     pub fn connect_via<A: ToSocketAddrs, B: ToI2pSocketAddrs>(&self, sam_addr: A, addr: B) -> io::Result<()> {
-        super::each_addr(sam_addr, addr, |sam_addr, addr| unimplemented!())
+        super::each_addr(sam_addr, addr, |_sam_addr, _addr| unimplemented!())
     }
 
     /// Sends data on the socket to the remote address to which it is connected.
@@ -193,7 +195,7 @@ impl I2pDatagramSocket {
     /// socket.connect("127.0.0.1:8080").expect("connect function failed");
     /// socket.send(&[0, 1, 2]).expect("couldn't send message");
     /// ```
-    pub fn send(&self, buf: &[u8]) -> io::Result<usize> {
+    pub fn send(&self, _buf: &[u8]) -> io::Result<usize> {
         unimplemented!()
     }
 
@@ -216,7 +218,7 @@ impl I2pDatagramSocket {
     ///     Err(e) => println!("recv function failed: {:?}", e),
     /// }
     /// ```
-    pub fn recv(&self, buf: &mut [u8]) -> io::Result<usize> {
+    pub fn recv(&self, _buf: &mut [u8]) -> io::Result<usize> {
         unimplemented!()
     }
 
@@ -244,7 +246,7 @@ impl I2pDatagramSocket {
     ///     Err(e) => println!("peek function failed: {:?}", e),
     /// }
     /// ```
-    pub fn peek(&self, buf: &mut [u8]) -> io::Result<usize> {
+    pub fn peek(&self, _buf: &mut [u8]) -> io::Result<usize> {
         unimplemented!()
     }
 }
