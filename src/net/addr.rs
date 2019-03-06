@@ -264,8 +264,8 @@ impl ToI2pSocketAddrs for String {
 
 #[cfg(test)]
 mod tests {
-	use net::test::{isa, tsa};
-	use net::*;
+	use crate::net::test::{isa, tsa};
+	use crate::net::*;
 
 	#[test]
 	fn to_socket_addr_i2paddr_u16() {
