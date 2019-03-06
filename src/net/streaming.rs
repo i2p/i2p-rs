@@ -4,11 +4,11 @@ use std::fmt;
 use std::io;
 use std::net::{Shutdown, SocketAddr, ToSocketAddrs};
 
-use rand;
-use rand::Rng;
+use rand::{self, Rng};
+use rand::distributions::Alphanumeric;
 
 use crate::net::{I2pAddr, I2pSocketAddr, ToI2pSocketAddrs};
-use crate::sam::{StreamConnect, DEFAULT_API};
+use crate::sam::{DEFAULT_API, StreamConnect};
 
 /// A structure which represents an I2P stream between a local socket and a
 /// remote socket.
@@ -108,7 +108,7 @@ impl I2pStream {
     }
 
     fn connect_addr(sam_addr: &SocketAddr, addr: &I2pSocketAddr) -> io::Result<I2pStream> {
-        let suffix: String = rand::thread_rng().gen_ascii_chars().take(8).collect();
+        let suffix: String = rand::thread_rng().sample_iter(&Alphanumeric).take(8).collect();
         let nickname = format!("i2prs-{}", suffix);
 
         let stream = StreamConnect::new(sam_addr, &addr.dest().string(), addr.port(), &nickname)?;
@@ -351,7 +351,7 @@ impl<'a> Iterator for Incoming<'a> {
 }
 
 impl fmt::Debug for I2pListener {
-    fn fmt(&self, _f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, _f: &mut fmt::Formatter) -> fmt::Result {
         unimplemented!()
     }
 }

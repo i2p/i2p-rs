@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use std::io::{self, Error, ErrorKind};
 use std::net::{SocketAddr, ToSocketAddrs};
 
@@ -118,13 +120,12 @@ impl I2pDatagramSocket {
     /// let socket = I2pDatagramSocket::bind("127.0.0.1:34254").expect("couldn't bind to address");
     /// socket.send_to(&[0; 10], "127.0.0.1:4242").expect("couldn't send data");
     /// ```
-    pub fn send_to<A: ToI2pSocketAddrs>(&self, _buf: &[u8], addr: A) -> io::Result<usize> {
+    pub fn send_to<A: ToI2pSocketAddrs>(&self, _buf: &[u8], addr: A)
+                                     -> io::Result<usize> {
         match addr.to_socket_addrs()?.next() {
             Some(_addr) => unimplemented!(),
-            None => Err(Error::new(
-                ErrorKind::InvalidInput,
-                "no addresses to send data to",
-            )),
+            None => Err(Error::new(ErrorKind::InvalidInput,
+                                   "no addresses to send data to")),
         }
     }
 
@@ -177,11 +178,7 @@ impl I2pDatagramSocket {
         self.connect_via(DEFAULT_API, addr)
     }
 
-    pub fn connect_via<A: ToSocketAddrs, B: ToI2pSocketAddrs>(
-        &self,
-        sam_addr: A,
-        addr: B,
-    ) -> io::Result<()> {
+    pub fn connect_via<A: ToSocketAddrs, B: ToI2pSocketAddrs>(&self, sam_addr: A, addr: B) -> io::Result<()> {
         super::each_addr(sam_addr, addr, |_sam_addr, _addr| unimplemented!())
     }
 
