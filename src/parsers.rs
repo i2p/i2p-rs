@@ -1,20 +1,22 @@
-use nom::{space, alphanumeric, named, do_parse, separated_list, take_till_s,
-          tag_s, call, error_position, tag, alt, take_till};
+use nom::{
+	alphanumeric, alt, call, do_parse, error_position, named, separated_list, space, tag, tag_s,
+	take_till, take_till_s,
+};
 
 fn is_space(chr: char) -> bool {
-    chr == ' ' || chr == '\t'
+	chr == ' ' || chr == '\t'
 }
 
 fn is_next_line(chr: char) -> bool {
-    chr == '\n'
+	chr == '\n'
 }
 
 fn is_space_or_next_line(chr: char) -> bool {
-    is_space(chr) || is_next_line(chr)
+	is_space(chr) || is_next_line(chr)
 }
 
 fn is_double_quote(chr: char) -> bool {
-    chr == '\"'
+	chr == '\"'
 }
 
 named!(quoted_value <&str, &str>,
@@ -86,74 +88,100 @@ named!(pub sam_dest_reply <&str, Vec<(&str, &str)> >,
 
 #[cfg(test)]
 mod tests {
-    use nom::IResult::Done;
-    use nom::IResult::Error;
-    use nom::ErrorKind;
+	use nom::ErrorKind;
+	use nom::IResult::Done;
+	use nom::IResult::Error;
 
-    #[test]
-    fn hello() {
-        use parsers::sam_hello;
+	#[test]
+	fn hello() {
+		use parsers::sam_hello;
 
-        assert_eq!(
-            sam_hello("HELLO REPLY RESULT=OK VERSION=3.1\n"),
-            Done("", vec![("RESULT", "OK"), ("VERSION", "3.1")]));
-        assert_eq!(
-            sam_hello("HELLO REPLY RESULT=NOVERSION\n"),
-            Done("", vec![("RESULT", "NOVERSION")]));
-        assert_eq!(
-            sam_hello("HELLO REPLY RESULT=I2P_ERROR MESSAGE=\"Something failed\"\n"),
-            Done("", vec![("RESULT", "I2P_ERROR"), ("MESSAGE", "Something failed")]));
-    }
+		assert_eq!(
+			sam_hello("HELLO REPLY RESULT=OK VERSION=3.1\n"),
+			Done("", vec![("RESULT", "OK"), ("VERSION", "3.1")])
+		);
+		assert_eq!(
+			sam_hello("HELLO REPLY RESULT=NOVERSION\n"),
+			Done("", vec![("RESULT", "NOVERSION")])
+		);
+		assert_eq!(
+			sam_hello("HELLO REPLY RESULT=I2P_ERROR MESSAGE=\"Something failed\"\n"),
+			Done(
+				"",
+				vec![("RESULT", "I2P_ERROR"), ("MESSAGE", "Something failed")]
+			)
+		);
+	}
 
-    #[test]
-    fn session_status() {
-        use parsers::sam_session_status;
+	#[test]
+	fn session_status() {
+		use parsers::sam_session_status;
 
-        assert_eq!(
-            sam_session_status("SESSION STATUS RESULT=OK DESTINATION=privkey\n"),
-            Done("", vec![("RESULT", "OK"), ("DESTINATION", "privkey")]));
-        assert_eq!(
-            sam_session_status("SESSION STATUS RESULT=DUPLICATED_ID\n"),
-            Done("", vec![("RESULT", "DUPLICATED_ID")]));
-    }
+		assert_eq!(
+			sam_session_status("SESSION STATUS RESULT=OK DESTINATION=privkey\n"),
+			Done("", vec![("RESULT", "OK"), ("DESTINATION", "privkey")])
+		);
+		assert_eq!(
+			sam_session_status("SESSION STATUS RESULT=DUPLICATED_ID\n"),
+			Done("", vec![("RESULT", "DUPLICATED_ID")])
+		);
+	}
 
-    #[test]
-    fn stream_status() {
-        use parsers::sam_stream_status;
+	#[test]
+	fn stream_status() {
+		use parsers::sam_stream_status;
 
-        assert_eq!(
-            sam_stream_status("STREAM STATUS RESULT=OK\n"),
-            Done("", vec![("RESULT", "OK")]));
-        assert_eq!(
-            sam_stream_status("STREAM STATUS RESULT=CANT_REACH_PEER MESSAGE=\"Can't reach peer\"\n"),
-            Done("", vec![("RESULT", "CANT_REACH_PEER"), ("MESSAGE", "Can't reach peer")]));
-    }
+		assert_eq!(
+			sam_stream_status("STREAM STATUS RESULT=OK\n"),
+			Done("", vec![("RESULT", "OK")])
+		);
+		assert_eq!(
+			sam_stream_status(
+				"STREAM STATUS RESULT=CANT_REACH_PEER MESSAGE=\"Can't reach peer\"\n"
+			),
+			Done(
+				"",
+				vec![
+					("RESULT", "CANT_REACH_PEER"),
+					("MESSAGE", "Can't reach peer")
+				]
+			)
+		);
+	}
 
-    #[test]
-    fn naming_reply() {
-        use parsers::sam_naming_reply;
+	#[test]
+	fn naming_reply() {
+		use parsers::sam_naming_reply;
 
-        assert_eq!(
-            sam_naming_reply("NAMING REPLY RESULT=OK NAME=name VALUE=dest\n"),
-            Done("", vec![("RESULT", "OK"), ("NAME", "name"), ("VALUE", "dest")]));
-        assert_eq!(
-            sam_naming_reply("NAMING REPLY RESULT=KEY_NOT_FOUND\n"),
-            Done("", vec![("RESULT", "KEY_NOT_FOUND")]));
+		assert_eq!(
+			sam_naming_reply("NAMING REPLY RESULT=OK NAME=name VALUE=dest\n"),
+			Done(
+				"",
+				vec![("RESULT", "OK"), ("NAME", "name"), ("VALUE", "dest")]
+			)
+		);
+		assert_eq!(
+			sam_naming_reply("NAMING REPLY RESULT=KEY_NOT_FOUND\n"),
+			Done("", vec![("RESULT", "KEY_NOT_FOUND")])
+		);
 
-        assert_eq!(
-            sam_naming_reply("NAMINGREPLY RESULT=KEY_NOT_FOUND\n"),
-            Error(ErrorKind::Tag));
-        assert_eq!(
-            sam_naming_reply("NAMING  REPLY RESULT=KEY_NOT_FOUND\n"),
-            Error(ErrorKind::Tag));
-    }
+		assert_eq!(
+			sam_naming_reply("NAMINGREPLY RESULT=KEY_NOT_FOUND\n"),
+			Error(ErrorKind::Tag)
+		);
+		assert_eq!(
+			sam_naming_reply("NAMING  REPLY RESULT=KEY_NOT_FOUND\n"),
+			Error(ErrorKind::Tag)
+		);
+	}
 
-    #[test]
-    fn dest_reply() {
-        use parsers::sam_dest_reply;
+	#[test]
+	fn dest_reply() {
+		use parsers::sam_dest_reply;
 
-        assert_eq!(
-            sam_dest_reply("DEST REPLY PUB=foo PRIV=foobar\n"),
-            Done("", vec![("PUB", "foo"), ("PRIV", "foobar")]));
-    }
+		assert_eq!(
+			sam_dest_reply("DEST REPLY PUB=foo PRIV=foobar\n"),
+			Done("", vec![("PUB", "foo"), ("PRIV", "foobar")])
+		);
+	}
 }
