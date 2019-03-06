@@ -1,4 +1,4 @@
-use net::{I2pAddr, I2pSocketAddr, ToI2pSocketAddrs};
+use crate::net::{I2pAddr, I2pSocketAddr, ToI2pSocketAddrs};
 
 pub fn isa(a: I2pAddr, p: u16) -> I2pSocketAddr {
 	I2pSocketAddr::new(a, p)
