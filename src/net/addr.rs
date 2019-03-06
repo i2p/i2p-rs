@@ -9,117 +9,117 @@ use std::vec;
 use crate::net::i2p::I2pAddr;
 
 pub struct I2pSocketAddr {
-    port: u16,
-    dest: I2pAddr,
+	port: u16,
+	dest: I2pAddr,
 }
 
 impl I2pSocketAddr {
-    /// Creates a new socket address from the (dest, port) pair.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use i2p::net::{I2pAddr, I2pSocketAddr};
-    ///
-    /// let socket = I2pSocketAddr::new(I2pAddr::new("example.i2p"), 8080);
-    /// assert_eq!(socket.dest(), I2pAddr::new("example.i2p"));
-    /// assert_eq!(socket.port(), 8080);
-    /// ```
-    pub fn new(dest: I2pAddr, port: u16) -> I2pSocketAddr {
-        I2pSocketAddr {
-            port: port,
-            dest: dest,
-        }
-    }
+	/// Creates a new socket address from the (dest, port) pair.
+	///
+	/// # Examples
+	///
+	/// ```
+	/// use i2p::net::{I2pAddr, I2pSocketAddr};
+	///
+	/// let socket = I2pSocketAddr::new(I2pAddr::new("example.i2p"), 8080);
+	/// assert_eq!(socket.dest(), I2pAddr::new("example.i2p"));
+	/// assert_eq!(socket.port(), 8080);
+	/// ```
+	pub fn new(dest: I2pAddr, port: u16) -> I2pSocketAddr {
+		I2pSocketAddr {
+			port: port,
+			dest: dest,
+		}
+	}
 
-    /// Returns the I2P address associated with this socket address.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use i2p::net::{I2pAddr, I2pSocketAddr};
-    ///
-    /// let socket = I2pSocketAddr::new(I2pAddr::new("example.i2p"), 8080);
-    /// assert_eq!(socket.dest(), I2pAddr::new("example.i2p"));
-    /// ```
-    pub fn dest(&self) -> I2pAddr {
-        self.dest.clone()
-    }
+	/// Returns the I2P address associated with this socket address.
+	///
+	/// # Examples
+	///
+	/// ```
+	/// use i2p::net::{I2pAddr, I2pSocketAddr};
+	///
+	/// let socket = I2pSocketAddr::new(I2pAddr::new("example.i2p"), 8080);
+	/// assert_eq!(socket.dest(), I2pAddr::new("example.i2p"));
+	/// ```
+	pub fn dest(&self) -> I2pAddr {
+		self.dest.clone()
+	}
 
-    /// Change the I2P address associated with this socket address.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use i2p::net::{I2pAddr, I2pSocketAddr};
-    ///
-    /// let mut socket = I2pSocketAddr::new(I2pAddr::new("example.i2p"), 8080);
-    /// socket.set_dest(I2pAddr::new("foobar.i2p"));
-    /// assert_eq!(socket.dest(), I2pAddr::new("foobar.i2p"));
-    /// ```
-    pub fn set_dest(&mut self, new_dest: I2pAddr) {
-        self.dest = new_dest;
-    }
+	/// Change the I2P address associated with this socket address.
+	///
+	/// # Examples
+	///
+	/// ```
+	/// use i2p::net::{I2pAddr, I2pSocketAddr};
+	///
+	/// let mut socket = I2pSocketAddr::new(I2pAddr::new("example.i2p"), 8080);
+	/// socket.set_dest(I2pAddr::new("foobar.i2p"));
+	/// assert_eq!(socket.dest(), I2pAddr::new("foobar.i2p"));
+	/// ```
+	pub fn set_dest(&mut self, new_dest: I2pAddr) {
+		self.dest = new_dest;
+	}
 
-    /// Returns the port number associated with this socket address.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use i2p::net::{I2pAddr, I2pSocketAddr};
-    ///
-    /// let socket = I2pSocketAddr::new(I2pAddr::new("example.i2p"), 8080);
-    /// assert_eq!(socket.port(), 8080);
-    /// ```
-    pub fn port(&self) -> u16 {
-        self.port
-    }
+	/// Returns the port number associated with this socket address.
+	///
+	/// # Examples
+	///
+	/// ```
+	/// use i2p::net::{I2pAddr, I2pSocketAddr};
+	///
+	/// let socket = I2pSocketAddr::new(I2pAddr::new("example.i2p"), 8080);
+	/// assert_eq!(socket.port(), 8080);
+	/// ```
+	pub fn port(&self) -> u16 {
+		self.port
+	}
 
-    /// Change the port number associated with this socket address.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use i2p::net::{I2pAddr, I2pSocketAddr};
-    ///
-    /// let mut socket = I2pSocketAddr::new(I2pAddr::new("example.i2p"), 8080);
-    /// socket.set_port(1025);
-    /// assert_eq!(socket.port(), 1025);
-    /// ```
-    pub fn set_port(&mut self, new_port: u16) {
-        self.port = new_port;
-    }
+	/// Change the port number associated with this socket address.
+	///
+	/// # Examples
+	///
+	/// ```
+	/// use i2p::net::{I2pAddr, I2pSocketAddr};
+	///
+	/// let mut socket = I2pSocketAddr::new(I2pAddr::new("example.i2p"), 8080);
+	/// socket.set_port(1025);
+	/// assert_eq!(socket.port(), 1025);
+	/// ```
+	pub fn set_port(&mut self, new_port: u16) {
+		self.port = new_port;
+	}
 }
 
 impl fmt::Display for I2pSocketAddr {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}:{}", self.dest(), self.port())
-    }
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		write!(f, "{}:{}", self.dest(), self.port())
+	}
 }
 
 impl fmt::Debug for I2pSocketAddr {
-    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::Display::fmt(self, fmt)
-    }
+	fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+		fmt::Display::fmt(self, fmt)
+	}
 }
 
 impl Clone for I2pSocketAddr {
-    fn clone(&self) -> I2pSocketAddr {
-        I2pSocketAddr::new(self.dest.clone(), self.port)
-    }
+	fn clone(&self) -> I2pSocketAddr {
+		I2pSocketAddr::new(self.dest.clone(), self.port)
+	}
 }
 
 impl PartialEq for I2pSocketAddr {
-    fn eq(&self, other: &I2pSocketAddr) -> bool {
-        self.port == other.port && self.dest == other.dest
-    }
+	fn eq(&self, other: &I2pSocketAddr) -> bool {
+		self.port == other.port && self.dest == other.dest
+	}
 }
 impl Eq for I2pSocketAddr {}
 
 impl hash::Hash for I2pSocketAddr {
-    fn hash<H: hash::Hasher>(&self, s: &mut H) {
-        (self.port, &self.dest).hash(s)
-    }
+	fn hash<H: hash::Hasher>(&self, s: &mut H) {
+		(self.port, &self.dest).hash(s)
+	}
 }
 
 /// A trait for objects which can be converted or resolved to one or more
@@ -176,161 +176,161 @@ impl hash::Hash for I2pSocketAddr {
 /// }
 /// ```
 pub trait ToI2pSocketAddrs {
-    /// Returned iterator over socket addresses which this type may correspond
-    /// to.
-    type Iter: Iterator<Item = I2pSocketAddr>;
+	/// Returned iterator over socket addresses which this type may correspond
+	/// to.
+	type Iter: Iterator<Item = I2pSocketAddr>;
 
-    /// Converts this object to an iterator of resolved `I2pSocketAddr`s.
-    ///
-    /// The returned iterator may not actually yield any values depending on the
-    /// outcome of any resolution performed.
-    ///
-    /// Note that this function may block the current thread while resolution is
-    /// performed.
-    ///
-    /// # Errors
-    ///
-    /// Any errors encountered during resolution will be returned as an `Err`.
-    fn to_socket_addrs(&self) -> io::Result<Self::Iter>;
+	/// Converts this object to an iterator of resolved `I2pSocketAddr`s.
+	///
+	/// The returned iterator may not actually yield any values depending on the
+	/// outcome of any resolution performed.
+	///
+	/// Note that this function may block the current thread while resolution is
+	/// performed.
+	///
+	/// # Errors
+	///
+	/// Any errors encountered during resolution will be returned as an `Err`.
+	fn to_socket_addrs(&self) -> io::Result<Self::Iter>;
 }
 
 impl ToI2pSocketAddrs for I2pSocketAddr {
-    type Iter = option::IntoIter<I2pSocketAddr>;
-    fn to_socket_addrs(&self) -> io::Result<option::IntoIter<I2pSocketAddr>> {
-        Ok(Some(self.clone()).into_iter())
-    }
+	type Iter = option::IntoIter<I2pSocketAddr>;
+	fn to_socket_addrs(&self) -> io::Result<option::IntoIter<I2pSocketAddr>> {
+		Ok(Some(self.clone()).into_iter())
+	}
 }
 
 impl ToI2pSocketAddrs for (I2pAddr, u16) {
-    type Iter = option::IntoIter<I2pSocketAddr>;
-    fn to_socket_addrs(&self) -> io::Result<option::IntoIter<I2pSocketAddr>> {
-        let (dest, port) = self.clone();
-        I2pSocketAddr::new(dest, port).to_socket_addrs()
-    }
+	type Iter = option::IntoIter<I2pSocketAddr>;
+	fn to_socket_addrs(&self) -> io::Result<option::IntoIter<I2pSocketAddr>> {
+		let (dest, port) = self.clone();
+		I2pSocketAddr::new(dest, port).to_socket_addrs()
+	}
 }
 
 impl<'a> ToI2pSocketAddrs for (&'a str, u16) {
-    type Iter = vec::IntoIter<I2pSocketAddr>;
-    fn to_socket_addrs(&self) -> io::Result<vec::IntoIter<I2pSocketAddr>> {
-        let (host, port) = *self;
-        let addr = I2pSocketAddr::new(I2pAddr::new(host), port);
-        Ok(vec![addr].into_iter())
-    }
+	type Iter = vec::IntoIter<I2pSocketAddr>;
+	fn to_socket_addrs(&self) -> io::Result<vec::IntoIter<I2pSocketAddr>> {
+		let (host, port) = *self;
+		let addr = I2pSocketAddr::new(I2pAddr::new(host), port);
+		Ok(vec![addr].into_iter())
+	}
 }
 
 // accepts strings like 'example.i2p:12345'
 impl ToI2pSocketAddrs for str {
-    type Iter = vec::IntoIter<I2pSocketAddr>;
-    fn to_socket_addrs(&self) -> io::Result<vec::IntoIter<I2pSocketAddr>> {
-        macro_rules! try_opt {
-            ($e:expr, $msg:expr) => {
-                match $e {
-                    Some(r) => r,
-                    None => return Err(io::Error::new(io::ErrorKind::InvalidInput, $msg)),
-                }
-            };
-        }
+	type Iter = vec::IntoIter<I2pSocketAddr>;
+	fn to_socket_addrs(&self) -> io::Result<vec::IntoIter<I2pSocketAddr>> {
+		macro_rules! try_opt {
+			($e:expr, $msg:expr) => {
+				match $e {
+					Some(r) => r,
+					None => return Err(io::Error::new(io::ErrorKind::InvalidInput, $msg)),
+					}
+			};
+		}
 
-        // split the string by ':' and convert the second part to u16
-        let mut parts_iter = self.rsplitn(2, ':');
-        let port_str = try_opt!(parts_iter.next(), "invalid I2P socket address");
-        let host = try_opt!(parts_iter.next(), "invalid I2P socket address");
-        let port: u16 = try_opt!(port_str.parse().ok(), "invalid port value");
-        (host, port).to_socket_addrs()
-    }
+		// split the string by ':' and convert the second part to u16
+		let mut parts_iter = self.rsplitn(2, ':');
+		let port_str = try_opt!(parts_iter.next(), "invalid I2P socket address");
+		let host = try_opt!(parts_iter.next(), "invalid I2P socket address");
+		let port: u16 = try_opt!(port_str.parse().ok(), "invalid port value");
+		(host, port).to_socket_addrs()
+	}
 }
 
 impl<'a> ToI2pSocketAddrs for &'a [I2pSocketAddr] {
-    type Iter = iter::Cloned<slice::Iter<'a, I2pSocketAddr>>;
+	type Iter = iter::Cloned<slice::Iter<'a, I2pSocketAddr>>;
 
-    fn to_socket_addrs(&self) -> io::Result<Self::Iter> {
-        Ok(self.iter().cloned())
-    }
+	fn to_socket_addrs(&self) -> io::Result<Self::Iter> {
+		Ok(self.iter().cloned())
+	}
 }
 
 impl<'a, T: ToI2pSocketAddrs + ?Sized> ToI2pSocketAddrs for &'a T {
-    type Iter = T::Iter;
-    fn to_socket_addrs(&self) -> io::Result<T::Iter> {
-        (**self).to_socket_addrs()
-    }
+	type Iter = T::Iter;
+	fn to_socket_addrs(&self) -> io::Result<T::Iter> {
+		(**self).to_socket_addrs()
+	}
 }
 
 impl ToI2pSocketAddrs for String {
-    type Iter = vec::IntoIter<I2pSocketAddr>;
-    fn to_socket_addrs(&self) -> io::Result<vec::IntoIter<I2pSocketAddr>> {
-        (&**self).to_socket_addrs()
-    }
+	type Iter = vec::IntoIter<I2pSocketAddr>;
+	fn to_socket_addrs(&self) -> io::Result<vec::IntoIter<I2pSocketAddr>> {
+		(&**self).to_socket_addrs()
+	}
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::net::test::{isa, tsa};
-    use crate::net::*;
+	use net::test::{isa, tsa};
+	use net::*;
 
-    #[test]
-    fn to_socket_addr_i2paddr_u16() {
-        let a = I2pAddr::new("example.i2p");
-        let p = 12345;
-        let e = I2pSocketAddr::new(a.clone(), p);
-        assert_eq!(Ok(vec![e]), tsa((a, p)));
-    }
+	#[test]
+	fn to_socket_addr_i2paddr_u16() {
+		let a = I2pAddr::new("example.i2p");
+		let p = 12345;
+		let e = I2pSocketAddr::new(a.clone(), p);
+		assert_eq!(Ok(vec![e]), tsa((a, p)));
+	}
 
-    #[test]
-    fn to_socket_addr_str_u16() {
-        let a = isa(I2pAddr::new("example.i2p"), 24352);
-        assert_eq!(Ok(vec![a]), tsa(("example.i2p", 24352)));
+	#[test]
+	fn to_socket_addr_str_u16() {
+		let a = isa(I2pAddr::new("example.i2p"), 24352);
+		assert_eq!(Ok(vec![a]), tsa(("example.i2p", 24352)));
 
-        let a = isa(I2pAddr::new("example.i2p"), 23924);
-        assert!(tsa(("example.i2p", 23924)).unwrap().contains(&a));
-    }
+		let a = isa(I2pAddr::new("example.i2p"), 23924);
+		assert!(tsa(("example.i2p", 23924)).unwrap().contains(&a));
+	}
 
-    #[test]
-    fn to_socket_addr_str() {
-        let a = isa(I2pAddr::new("example.i2p"), 24352);
-        assert_eq!(Ok(vec![a]), tsa("example.i2p:24352"));
+	#[test]
+	fn to_socket_addr_str() {
+		let a = isa(I2pAddr::new("example.i2p"), 24352);
+		assert_eq!(Ok(vec![a]), tsa("example.i2p:24352"));
 
-        let a = isa(I2pAddr::new("example.i2p"), 23924);
-        assert!(tsa("example.i2p:23924").unwrap().contains(&a));
-    }
+		let a = isa(I2pAddr::new("example.i2p"), 23924);
+		assert!(tsa("example.i2p:23924").unwrap().contains(&a));
+	}
 
-    #[test]
-    fn to_socket_addr_string() {
-        let a = isa(I2pAddr::new("example.i2p"), 24352);
-        assert_eq!(
-            Ok(vec![a.clone()]),
-            tsa(&*format!("{}:{}", "example.i2p", "24352"))
-        );
-        assert_eq!(
-            Ok(vec![a.clone()]),
-            tsa(&format!("{}:{}", "example.i2p", "24352"))
-        );
-        assert_eq!(
-            Ok(vec![a.clone()]),
-            tsa(format!("{}:{}", "example.i2p", "24352"))
-        );
+	#[test]
+	fn to_socket_addr_string() {
+		let a = isa(I2pAddr::new("example.i2p"), 24352);
+		assert_eq!(
+			Ok(vec![a.clone()]),
+			tsa(&*format!("{}:{}", "example.i2p", "24352"))
+		);
+		assert_eq!(
+			Ok(vec![a.clone()]),
+			tsa(&format!("{}:{}", "example.i2p", "24352"))
+		);
+		assert_eq!(
+			Ok(vec![a.clone()]),
+			tsa(format!("{}:{}", "example.i2p", "24352"))
+		);
 
-        let s = format!("{}:{}", "example.i2p", "24352");
-        assert_eq!(Ok(vec![a]), tsa(s));
-        // s has been moved into the tsa call
-    }
+		let s = format!("{}:{}", "example.i2p", "24352");
+		assert_eq!(Ok(vec![a]), tsa(s));
+		// s has been moved into the tsa call
+	}
 
-    #[test]
-    fn set_dest() {
-        fn i2p(low: u8) -> I2pAddr {
-            I2pAddr::new(&format!("example{}.i2p", low))
-        }
+	#[test]
+	fn set_dest() {
+		fn i2p(low: u8) -> I2pAddr {
+			I2pAddr::new(&format!("example{}.i2p", low))
+		}
 
-        let mut addr = I2pSocketAddr::new(i2p(12), 80);
-        assert_eq!(addr.dest(), i2p(12));
-        addr.set_dest(i2p(13));
-        assert_eq!(addr.dest(), i2p(13));
-    }
+		let mut addr = I2pSocketAddr::new(i2p(12), 80);
+		assert_eq!(addr.dest(), i2p(12));
+		addr.set_dest(i2p(13));
+		assert_eq!(addr.dest(), i2p(13));
+	}
 
-    #[test]
-    fn set_port() {
-        let mut addr = I2pSocketAddr::new(I2pAddr::new("example.i2p"), 80);
-        assert_eq!(addr.port(), 80);
-        addr.set_port(8080);
-        assert_eq!(addr.port(), 8080);
-    }
+	#[test]
+	fn set_port() {
+		let mut addr = I2pSocketAddr::new(I2pAddr::new("example.i2p"), 80);
+		assert_eq!(addr.port(), 80);
+		addr.set_port(8080);
+		assert_eq!(addr.port(), 8080);
+	}
 }

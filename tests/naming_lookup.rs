@@ -1,11 +1,11 @@
 #[test]
 #[ignore]
 fn naming_lookup() {
-    use i2p::sam::SamConnection;
-    let mut sam = SamConnection::connect("127.0.0.1:7656").unwrap();
-    {
-        let res = sam.naming_lookup("zzz.i2p");
-        match res {
+	use i2p::sam::SamConnection;
+	let mut sam = SamConnection::connect("127.0.0.1:7656").unwrap();
+	{
+		let res = sam.naming_lookup("zzz.i2p");
+		match res {
             Ok(d) => {
                 assert_eq!(
                     d,
@@ -14,5 +14,5 @@ fn naming_lookup() {
             }
             Err(ref e) => panic!("An error occurred: {}", e),
         }
-    }
+	}
 }
