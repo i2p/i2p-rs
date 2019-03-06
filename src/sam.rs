@@ -6,6 +6,7 @@ use std::io;
 use std::io::{Error, ErrorKind, BufReader};
 use std::net::{Shutdown, SocketAddr, TcpStream, ToSocketAddrs};
 
+use log::debug;
 use nom::IResult;
 
 use crate::parsers::{sam_hello, sam_naming_reply, sam_session_status, sam_stream_status};
