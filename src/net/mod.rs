@@ -1,5 +1,5 @@
-use std::io;
 use std::net::{SocketAddr, ToSocketAddrs};
+use crate::error::{Error, ErrorKind};
 
 pub use self::addr::{I2pSocketAddr, ToI2pSocketAddrs};
 pub use self::datagram::I2pDatagramSocket;
@@ -17,9 +17,9 @@ fn each_addr<A: ToSocketAddrs, B: ToI2pSocketAddrs, F, T>(
 	sam_addr: A,
 	addr: B,
 	mut f: F,
-) -> io::Result<T>
+) -> Result<T, Error>
 where
-	F: FnMut(&SocketAddr, &I2pSocketAddr) -> io::Result<T>,
+	F: FnMut(&SocketAddr, &I2pSocketAddr) -> Result<T, Error>,
 {
 	let mut last_err = None;
 	for addr in addr.to_socket_addrs()? {
@@ -30,10 +30,5 @@ where
 			}
 		}
 	}
-	Err(last_err.unwrap_or_else(|| {
-		io::Error::new(
-			io::ErrorKind::InvalidInput,
-			"could not resolve to any addresses",
-		)
-	}))
+	Err(last_err.unwrap_or(ErrorKind::UnresolvableAddress.into()))
 }

@@ -2,14 +2,14 @@ use std::io::prelude::*;
 
 use std::clone::Clone;
 use std::collections::HashMap;
-use std::io;
-use std::io::{BufReader, Error, ErrorKind};
+use std::io::{self, BufReader};
 use std::net::{Shutdown, SocketAddr, TcpStream, ToSocketAddrs};
 
 use log::debug;
 use nom::IResult;
 
 use crate::parsers::{sam_hello, sam_naming_reply, sam_session_status, sam_stream_status};
+use crate::error::{Error, ErrorKind};
 
 pub static DEFAULT_API: &'static str = "127.0.0.1:7656";
 
@@ -56,14 +56,15 @@ fn verify_response<'a>(vec: &'a [(&str, &str)]) -> Result<HashMap<&'a str, &'a s
 	let msg = map.get("MESSAGE").unwrap_or(&"").clone();
 	match res {
 		"OK" => Ok(map),
-		"CANT_REACH_PEER" | "KEY_NOT_FOUND" | "PEER_NOT_FOUND" => {
-			Err(Error::new(ErrorKind::NotFound, msg))
-		}
-		"DUPLICATED_DEST" => Err(Error::new(ErrorKind::AddrInUse, msg)),
-		"INVALID_KEY" | "INVALID_ID" => Err(Error::new(ErrorKind::InvalidInput, msg)),
-		"TIMEOUT" => Err(Error::new(ErrorKind::TimedOut, msg)),
-		"I2P_ERROR" => Err(Error::new(ErrorKind::Other, msg)),
-		_ => Err(Error::new(ErrorKind::Other, msg)),
+		"CANT_REACH_PEER" => Err(ErrorKind::SAMCantReachPeer(msg.to_string()).into()),
+		"KEY_NOT_FOUND" => Err(ErrorKind::SAMKeyNotFound(msg.to_string()).into()),
+		"PEER_NOT_FOUND" => Err(ErrorKind::SAMPeerNotFound(msg.to_string()).into()),
+		"DUPLICATED_DEST" => Err(ErrorKind::SAMDuplicatedDest(msg.to_string()).into()),
+		"INVALID_KEY" => Err(ErrorKind::SAMInvalidKey(msg.to_string()).into()),
+		"INVALID_ID" => Err(ErrorKind::SAMInvalidId(msg.to_string()).into()),
+		"TIMEOUT" => Err(ErrorKind::SAMTimeout(msg.to_string()).into()),
+		"I2P_ERROR" => Err(ErrorKind::SAMI2PError(msg.to_string()).into()),
+		_ => Err(ErrorKind::SAMInvalidMessage(msg.to_string()).into()),
 	}
 }
 
@@ -81,6 +82,10 @@ impl SamConnection {
 		debug!("<- {}", &buffer);
 
 		let response = reply_parser(&buffer);
+		if !response.is_done() {
+			debug!("nom parser error: {:?}", response);
+			return Err(ErrorKind::MessageParsing.into());
+		}
 		let vec_opts = response.unwrap().1;
 		verify_response(&vec_opts).map(|m| {
 			m.iter()
@@ -115,8 +120,8 @@ impl SamConnection {
 		Ok(ret["VALUE"].clone())
 	}
 
-	pub fn duplicate(&self) -> io::Result<SamConnection> {
-		self.conn.try_clone().map(|s| SamConnection { conn: s })
+	pub fn duplicate(&self) -> Result<SamConnection, Error> {
+		self.conn.try_clone().map(|s| SamConnection { conn: s }).map_err(|e| e.into())
 	}
 }
 
@@ -127,7 +132,7 @@ impl Session {
 		nickname: &str,
 		style: SessionStyle,
 	) -> Result<Session, Error> {
-		let mut sam = SamConnection::connect(sam_addr).unwrap();
+		let mut sam = SamConnection::connect(sam_addr)?;
 		let create_session_msg = format!(
 			"SESSION CREATE STYLE={style} ID={nickname} DESTINATION={destination} \n",
 			style = style.string(),
@@ -145,19 +150,19 @@ impl Session {
 		})
 	}
 
-	pub fn sam_api(&self) -> io::Result<SocketAddr> {
-		self.sam.conn.peer_addr()
+	pub fn sam_api(&self) -> Result<SocketAddr, Error> {
+		self.sam.conn.peer_addr().map_err(|e| e.into())
 	}
 
-	pub fn naming_lookup(&mut self, name: &str) -> io::Result<String> {
+	pub fn naming_lookup(&mut self, name: &str) -> Result<String, Error> {
 		self.sam.naming_lookup(name)
 	}
 
-	pub fn duplicate(&self) -> io::Result<Session> {
+	pub fn duplicate(&self) -> Result<Session, Error> {
 		self.sam.duplicate().map(|s| Session {
 			sam: s,
 			local_dest: self.local_dest.clone(),
-		})
+		}).map_err(|e| e.into())
 	}
 }
 
@@ -167,7 +172,7 @@ impl StreamConnect {
 		destination: &str,
 		port: u16,
 		nickname: &str,
-	) -> io::Result<StreamConnect> {
+	) -> Result<StreamConnect, Error> {
 		let mut session = Session::create(sam_addr, "TRANSIENT", nickname, SessionStyle::Stream)?;
 
 		let mut sam = SamConnection::connect(session.sam_api()?).unwrap();
@@ -193,19 +198,19 @@ impl StreamConnect {
 		})
 	}
 
-	pub fn peer_addr(&self) -> io::Result<(String, u16)> {
+	pub fn peer_addr(&self) -> Result<(String, u16), Error> {
 		Ok((self.peer_dest.clone(), self.peer_port))
 	}
 
-	pub fn local_addr(&self) -> io::Result<(String, u16)> {
+	pub fn local_addr(&self) -> Result<(String, u16), Error> {
 		Ok((self.session.local_dest.clone(), self.local_port))
 	}
 
-	pub fn shutdown(&self, how: Shutdown) -> io::Result<()> {
-		self.sam.conn.shutdown(how)
+	pub fn shutdown(&self, how: Shutdown) -> Result<(), Error> {
+		self.sam.conn.shutdown(how).map_err(|e| e.into())
 	}
 
-	pub fn duplicate(&self) -> io::Result<StreamConnect> {
+	pub fn duplicate(&self) -> Result<StreamConnect, Error> {
 		Ok(StreamConnect {
 			sam: self.sam.duplicate()?,
 			session: self.session.duplicate()?,
