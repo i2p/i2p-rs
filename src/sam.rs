@@ -81,12 +81,7 @@ impl SamConnection {
 		reader.read_line(&mut buffer)?;
 		debug!("<- {}", &buffer);
 
-		let response = reply_parser(&buffer);
-		if !response.is_done() {
-			debug!("nom parser error: {:?}", response);
-			return Err(ErrorKind::MessageParsing.into());
-		}
-		let vec_opts = response.unwrap().1;
+		let vec_opts = reply_parser(&buffer)?.1;
 		verify_response(&vec_opts).map(|m| {
 			m.iter()
 				.map(|(k, v)| (k.to_string(), v.to_string()))

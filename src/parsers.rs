@@ -1,6 +1,5 @@
 use nom::{
-	alphanumeric, alt, call, do_parse, error_position, named, separated_list, space, tag, tag_s,
-	take_till, take_till_s,
+	alphanumeric, alt, do_parse, named, separated_list, space, tag_s, take_till_s,
 };
 
 fn is_space(chr: char) -> bool {

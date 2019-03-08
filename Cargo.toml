@@ -18,7 +18,7 @@ travis-ci = { repository = "i2p/i2p-rs" }
 failure = "0.1"
 failure_derive = "0.1"
 log = "0.4.6"
-nom = "^2.2"
+nom = "^4.2"
 rand = "0.5"
 
 [dev-dependencies]
