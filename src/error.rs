@@ -14,7 +14,7 @@ pub struct Error {
 #[derive(Clone, Eq, PartialEq, Debug, Fail)]
 pub enum ErrorKind {
 	/// Wraps io errors
-	#[fail(display = "An underlying IO error occured: {}", _0)]
+	#[fail(display = "IO error occurred (is i2p running?): {}", _0)]
 	Io(String),
 	/// Wraps nom parser errors
 	#[fail(display = "Failed to parse an I2P/SAM message")]
@@ -96,8 +96,8 @@ impl From<io::Error> for Error {
 	}
 }
 
-impl From<nom::Err> for Error {
-	fn from(_err: nom::Err) -> Error {
+impl<I,E> From<nom::Err<I,E>> for Error {
+	fn from(_err: nom::Err<I,E>) -> Error {
 		Error {
 			inner: Context::new(ErrorKind::MessageParsing),
 		}
