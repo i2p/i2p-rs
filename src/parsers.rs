@@ -88,8 +88,6 @@ named!(pub sam_dest_reply <&str, Vec<(&str, &str)> >,
 #[cfg(test)]
 mod tests {
 	use nom::ErrorKind;
-	use nom::IResult::Done;
-	use nom::IResult::Error;
 
 	#[test]
 	fn hello() {
@@ -97,18 +95,18 @@ mod tests {
 
 		assert_eq!(
 			sam_hello("HELLO REPLY RESULT=OK VERSION=3.1\n"),
-			Done("", vec![("RESULT", "OK"), ("VERSION", "3.1")])
+			Ok(("", vec![("RESULT", "OK"), ("VERSION", "3.1")]))
 		);
 		assert_eq!(
 			sam_hello("HELLO REPLY RESULT=NOVERSION\n"),
-			Done("", vec![("RESULT", "NOVERSION")])
+			Ok(("", vec![("RESULT", "NOVERSION")]))
 		);
 		assert_eq!(
 			sam_hello("HELLO REPLY RESULT=I2P_ERROR MESSAGE=\"Something failed\"\n"),
-			Done(
+			Ok((
 				"",
 				vec![("RESULT", "I2P_ERROR"), ("MESSAGE", "Something failed")]
-			)
+			))
 		);
 	}
 
@@ -118,11 +116,11 @@ mod tests {
 
 		assert_eq!(
 			sam_session_status("SESSION STATUS RESULT=OK DESTINATION=privkey\n"),
-			Done("", vec![("RESULT", "OK"), ("DESTINATION", "privkey")])
+			Ok(("", vec![("RESULT", "OK"), ("DESTINATION", "privkey")]))
 		);
 		assert_eq!(
 			sam_session_status("SESSION STATUS RESULT=DUPLICATED_ID\n"),
-			Done("", vec![("RESULT", "DUPLICATED_ID")])
+			Ok(("", vec![("RESULT", "DUPLICATED_ID")]))
 		);
 	}
 
@@ -132,19 +130,19 @@ mod tests {
 
 		assert_eq!(
 			sam_stream_status("STREAM STATUS RESULT=OK\n"),
-			Done("", vec![("RESULT", "OK")])
+			Ok(("", vec![("RESULT", "OK")]))
 		);
 		assert_eq!(
 			sam_stream_status(
 				"STREAM STATUS RESULT=CANT_REACH_PEER MESSAGE=\"Can't reach peer\"\n"
 			),
-			Done(
+			Ok((
 				"",
 				vec![
 					("RESULT", "CANT_REACH_PEER"),
 					("MESSAGE", "Can't reach peer")
 				]
-			)
+			))
 		);
 	}
 
@@ -154,23 +152,23 @@ mod tests {
 
 		assert_eq!(
 			sam_naming_reply("NAMING REPLY RESULT=OK NAME=name VALUE=dest\n"),
-			Done(
+			Ok((
 				"",
 				vec![("RESULT", "OK"), ("NAME", "name"), ("VALUE", "dest")]
-			)
+			))
 		);
 		assert_eq!(
 			sam_naming_reply("NAMING REPLY RESULT=KEY_NOT_FOUND\n"),
-			Done("", vec![("RESULT", "KEY_NOT_FOUND")])
+			Ok(("", vec![("RESULT", "KEY_NOT_FOUND")]))
 		);
 
 		assert_eq!(
-			sam_naming_reply("NAMINGREPLY RESULT=KEY_NOT_FOUND\n"),
-			Error(ErrorKind::Tag)
+			sam_naming_reply("NAMINGREPLY RESULT=KEY_NOT_FOUND\n").unwrap_err().into_error_kind(),
+			ErrorKind::Tag
 		);
 		assert_eq!(
-			sam_naming_reply("NAMING  REPLY RESULT=KEY_NOT_FOUND\n"),
-			Error(ErrorKind::Tag)
+			sam_naming_reply("NAMING  REPLY RESULT=KEY_NOT_FOUND\n").unwrap_err().into_error_kind(),
+			ErrorKind::Tag
 		);
 	}
 
@@ -180,7 +178,7 @@ mod tests {
 
 		assert_eq!(
 			sam_dest_reply("DEST REPLY PUB=foo PRIV=foobar\n"),
-			Done("", vec![("PUB", "foo"), ("PRIV", "foobar")])
+			Ok(("", vec![("PUB", "foo"), ("PRIV", "foobar")]))
 		);
 	}
 }
