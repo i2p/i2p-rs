@@ -2,14 +2,14 @@ use std::io::prelude::*;
 
 use std::fmt;
 use std::io;
-use std::net::{Shutdown, SocketAddr, ToSocketAddrs};
+use std::net::{Shutdown, SocketAddr, ToSocketAddrs, TcpListener};
 
 use rand::distributions::Alphanumeric;
 use rand::{self, Rng};
 
-use crate::error::Error;
+use crate::error::{Error, ErrorKind};
 use crate::net::{I2pAddr, I2pSocketAddr, ToI2pSocketAddrs};
-use crate::sam::{StreamConnect, DEFAULT_API};
+use crate::sam::{StreamConnect, StreamForward, DEFAULT_API};
 
 /// A structure which represents an I2P stream between a local socket and a
 /// remote socket.
@@ -34,33 +34,6 @@ pub struct I2pStream {
 	inner: StreamConnect,
 }
 
-/// Unimplemented
-///
-/// A structure representing a socket server.
-///
-/// # Examples
-///
-/// ```no_run
-/// use i2p::net::{I2pListener, I2pStream};
-///
-/// let listener = I2pListener::bind("127.0.0.1:80").unwrap();
-///
-/// fn handle_client(stream: I2pStream) {
-///     // ...
-/// }
-///
-/// // accept connections and process them serially
-/// for stream in listener.incoming() {
-///     match stream {
-///         Ok(stream) => {
-///             handle_client(stream);
-///         }
-///         Err(e) => { /* connection failed */ }
-///     }
-/// }
-/// ```
-pub struct I2pListener {}
-
 /// An infinite iterator over the connections from an `I2pListener`.
 ///
 /// This iterator will infinitely yield [`Some`] of the accepted connections. It
@@ -71,7 +44,6 @@ pub struct I2pListener {}
 /// [`Some`]: ../../std/option/enum.Option.html#variant.Some
 /// [`incoming`]: struct.I2pListener.html#method.incoming
 /// [`I2pListener`]: struct.I2pListener.html
-#[derive(Debug)]
 pub struct Incoming<'a> {
 	listener: &'a I2pListener,
 }
@@ -105,17 +77,11 @@ impl I2pStream {
 		sam_addr: A,
 		addr: B,
 	) -> Result<I2pStream, Error> {
-		super::each_addr(sam_addr, addr, I2pStream::connect_addr).map_err(|e| e.into())
+		super::each_i2p_addr(sam_addr, addr, I2pStream::connect_addr).map_err(|e| e.into())
 	}
 
 	fn connect_addr(sam_addr: &SocketAddr, addr: &I2pSocketAddr) -> Result<I2pStream, Error> {
-		let suffix: String = rand::thread_rng()
-			.sample_iter(&Alphanumeric)
-			.take(8)
-			.collect();
-		let nickname = format!("i2prs-{}", suffix);
-
-		let stream = StreamConnect::new(sam_addr, &addr.dest().string(), addr.port(), &nickname)?;
+		let stream = StreamConnect::new(sam_addr, &addr.dest().string(), addr.port(), &nickname())?;
 
 		Ok(I2pStream { inner: stream })
 	}
@@ -230,6 +196,34 @@ impl fmt::Debug for I2pStream {
 	}
 }
 
+/// A structure representing a socket server.
+///
+/// # Examples
+///
+/// ```no_run
+/// use i2p::net::{I2pListener, I2pStream};
+///
+/// let listener = I2pListener::bind("127.0.0.1:80").unwrap();
+///
+/// fn handle_client(stream: I2pStream) {
+///     // ...
+/// }
+///
+/// // accept connections and process them serially
+/// for stream in listener.incoming() {
+///     match stream {
+///         Ok(stream) => {
+///             handle_client(stream);
+///         }
+///         Err(e) => { /* connection failed */ }
+///     }
+/// }
+/// ```
+pub struct I2pListener {
+	forward: StreamForward,
+	listener: TcpListener,
+}
+
 impl I2pListener {
 	/// Creates a new `I2pListener` which will be bound to the specified
 	/// address.
@@ -248,19 +242,21 @@ impl I2pListener {
 	///
 	/// let listener = I2pListener::bind("127.0.0.1:80").unwrap();
 	/// ```
-	pub fn bind<A: ToI2pSocketAddrs>(addr: A) -> Result<I2pListener, Error> {
+	pub fn bind<A: ToSocketAddrs>(addr: A) -> Result<I2pListener, Error> {
 		I2pListener::bind_via(DEFAULT_API, addr)
 	}
 
-	pub fn bind_via<A: ToSocketAddrs, B: ToI2pSocketAddrs>(
+	pub fn bind_via<A: ToSocketAddrs, B: ToSocketAddrs>(
 		sam_addr: A,
 		addr: B,
 	) -> Result<I2pListener, Error> {
 		super::each_addr(sam_addr, addr, I2pListener::bind_addr).map_err(|e| e.into())
 	}
 
-	fn bind_addr(_sam_addr: &SocketAddr, _addr: &I2pSocketAddr) -> Result<I2pListener, Error> {
-		unimplemented!();
+	fn bind_addr(sam_addr: &SocketAddr, addr: &SocketAddr) -> Result<I2pListener, Error> {
+		let listener = TcpListener::bind(addr)?;
+		let forward = StreamForward::new(sam_addr, addr.port(), &nickname())?;
+		Ok(I2pListener{forward, listener})
 	}
 
 	/// Returns the local socket address of this listener.
@@ -275,7 +271,9 @@ impl I2pListener {
 	///            I2pSocketAddr::new(I2pAddr::new("example.i2p"), 8080));
 	/// ```
 	pub fn local_addr(&self) -> Result<I2pSocketAddr, Error> {
-		unimplemented!()
+		self.forward
+			.local_addr()
+			.map(|(d, p)| I2pSocketAddr::new(I2pAddr::new(&d), p))
 	}
 
 	/// Creates a new independently owned handle to the underlying socket.
@@ -293,7 +291,10 @@ impl I2pListener {
 	/// let listener_clone = listener.try_clone().unwrap();
 	/// ```
 	pub fn try_clone(&self) -> Result<I2pListener, Error> {
-		unimplemented!()
+		let listener = self.listener.try_clone()?;
+		let forward = self.forward.duplicate()?;
+		
+		Ok(I2pListener{forward, listener})
 	}
 
 	/// Accept a new incoming connection from this listener.
@@ -314,7 +315,22 @@ impl I2pListener {
 	/// }
 	/// ```
 	pub fn accept(&self) -> Result<(I2pStream, I2pSocketAddr), Error> {
-		unimplemented!()
+		// TCP address is useless as it'll be from our i2p server, we need to
+		// extract the i2p destination instead
+		let (tcp_stream, _) = self.listener.accept()?;
+		// TODO use a parser combinator, perhaps move down to sam.rs
+		let destination: String = {
+			let mut buf_read = io::BufReader::new(tcp_stream.try_clone()?);
+			let mut dest_line = String::new();
+			buf_read.read_line(&mut dest_line)?;
+			dest_line.split(" ").next().unwrap_or("").trim().to_string()
+		};
+		if destination.is_empty() {
+			return Err(ErrorKind::SAMKeyNotFound("No b64 destination in accept".to_string()).into());
+		}
+		let addr = I2pSocketAddr::new(I2pAddr::new(&destination), 0);
+		let i2p_stream = self.forward.accept(&destination, tcp_stream)?;
+		Ok((I2pStream{inner: i2p_stream}, addr))
 	}
 
 	/// Returns an iterator over the connections being received on this
@@ -354,8 +370,10 @@ impl<'a> Iterator for Incoming<'a> {
 	}
 }
 
-impl fmt::Debug for I2pListener {
-	fn fmt(&self, _f: &mut fmt::Formatter) -> fmt::Result {
-		unimplemented!()
-	}
+fn nickname() -> String {
+	let suffix: String = rand::thread_rng()
+		.sample_iter(&Alphanumeric)
+		.take(8)
+		.collect();
+	format!("i2prs-{}", suffix)
 }

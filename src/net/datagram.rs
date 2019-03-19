@@ -58,7 +58,7 @@ impl I2pDatagramSocket {
 		sam_addr: A,
 		addr: B,
 	) -> Result<I2pDatagramSocket, Error> {
-		super::each_addr(sam_addr, addr, I2pDatagramSocket::bind_addr).map_err(|e| e.into())
+		super::each_i2p_addr(sam_addr, addr, I2pDatagramSocket::bind_addr).map_err(|e| e.into())
 	}
 
 	fn bind_addr(_sam_addr: &SocketAddr, _addr: &I2pSocketAddr) -> Result<I2pDatagramSocket, Error> {
@@ -180,7 +180,7 @@ impl I2pDatagramSocket {
 		sam_addr: A,
 		addr: B,
 	) -> Result<(), Error> {
-		super::each_addr(sam_addr, addr, |_sam_addr, _addr| unimplemented!())
+		super::each_i2p_addr(sam_addr, addr, |_sam_addr, _addr| unimplemented!())
 	}
 
 	/// Sends data on the socket to the remote address to which it is connected.
