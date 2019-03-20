@@ -2,12 +2,12 @@ use std::io::prelude::*;
 
 use std::fmt;
 use std::io;
-use std::net::{Shutdown, SocketAddr, ToSocketAddrs, TcpListener};
+use std::net::{Shutdown, SocketAddr, ToSocketAddrs};
 
 use rand::distributions::Alphanumeric;
 use rand::{self, Rng};
 
-use crate::error::{Error, ErrorKind};
+use crate::error::Error;
 use crate::net::{I2pAddr, I2pSocketAddr, ToI2pSocketAddrs};
 use crate::sam::{StreamConnect, StreamForward, DEFAULT_API};
 
@@ -221,7 +221,6 @@ impl fmt::Debug for I2pStream {
 /// ```
 pub struct I2pListener {
 	forward: StreamForward,
-	listener: TcpListener,
 }
 
 impl I2pListener {
@@ -242,21 +241,17 @@ impl I2pListener {
 	///
 	/// let listener = I2pListener::bind("127.0.0.1:80").unwrap();
 	/// ```
-	pub fn bind<A: ToSocketAddrs>(addr: A) -> Result<I2pListener, Error> {
-		I2pListener::bind_via(DEFAULT_API, addr)
+	pub fn bind() -> Result<I2pListener, Error> {
+		I2pListener::bind_via(DEFAULT_API)
 	}
 
-	pub fn bind_via<A: ToSocketAddrs, B: ToSocketAddrs>(
-		sam_addr: A,
-		addr: B,
-	) -> Result<I2pListener, Error> {
-		super::each_addr(sam_addr, addr, I2pListener::bind_addr).map_err(|e| e.into())
+	pub fn bind_via<A: ToSocketAddrs>(sam_addr: A) -> Result<I2pListener, Error> {
+		super::each_addr(sam_addr, I2pListener::bind_addr).map_err(|e| e.into())
 	}
 
-	fn bind_addr(sam_addr: &SocketAddr, addr: &SocketAddr) -> Result<I2pListener, Error> {
-		let listener = TcpListener::bind(addr)?;
-		let forward = StreamForward::new(sam_addr, addr.port(), &nickname())?;
-		Ok(I2pListener{forward, listener})
+	fn bind_addr(sam_addr: &SocketAddr) -> Result<I2pListener, Error> {
+		let forward = StreamForward::new(sam_addr, &nickname())?;
+		Ok(I2pListener{forward})
 	}
 
 	/// Returns the local socket address of this listener.
@@ -291,10 +286,8 @@ impl I2pListener {
 	/// let listener_clone = listener.try_clone().unwrap();
 	/// ```
 	pub fn try_clone(&self) -> Result<I2pListener, Error> {
-		let listener = self.listener.try_clone()?;
 		let forward = self.forward.duplicate()?;
-		
-		Ok(I2pListener{forward, listener})
+		Ok(I2pListener{forward})
 	}
 
 	/// Accept a new incoming connection from this listener.
@@ -315,21 +308,7 @@ impl I2pListener {
 	/// }
 	/// ```
 	pub fn accept(&self) -> Result<(I2pStream, I2pSocketAddr), Error> {
-		// TCP address is useless as it'll be from our i2p server, we need to
-		// extract the i2p destination instead
-		let (tcp_stream, _) = self.listener.accept()?;
-		// TODO use a parser combinator, perhaps move down to sam.rs
-		let destination: String = {
-			let mut buf_read = io::BufReader::new(tcp_stream.try_clone()?);
-			let mut dest_line = String::new();
-			buf_read.read_line(&mut dest_line)?;
-			dest_line.split(" ").next().unwrap_or("").trim().to_string()
-		};
-		if destination.is_empty() {
-			return Err(ErrorKind::SAMKeyNotFound("No b64 destination in accept".to_string()).into());
-		}
-		let addr = I2pSocketAddr::new(I2pAddr::new(&destination), 0);
-		let i2p_stream = self.forward.accept(&destination, tcp_stream)?;
+		let (i2p_stream, addr) = self.forward.accept()?;
 		Ok((I2pStream{inner: i2p_stream}, addr))
 	}
 
