@@ -1,0 +1,41 @@
+extern crate env_logger;
+extern crate i2p;
+extern crate log;
+
+use log::*;
+use std::{thread, time};
+use std::io::{Read, Write};
+
+use i2p::net::{I2pListener, I2pStream};
+
+fn main() {
+	env_logger::init();
+
+	// start a TCP server that will get forwards from i2p
+	let server = I2pListener::bind().unwrap();
+	let our_dest = server.local_addr().unwrap();
+	thread::spawn(move || {
+		for stream in server.incoming() {
+			match stream {
+				Ok(mut stream) => {
+					thread::spawn(move || {
+						let mut buffer = [0; 100];
+						loop {
+							let n = stream.read(&mut buffer).unwrap();
+							info!("< {:?}", &buffer[0..n]);
+						}
+					});
+				}
+				Err(e) => error!("Error on incoming connection: {:?}", e),
+			}
+		}
+	});
+
+	thread::sleep(time::Duration::from_millis(1000));
+
+	// connect through i2p to our local destination
+	let mut client = I2pStream::connect(our_dest).unwrap();
+	let msg = "ping";
+	client.write(msg.as_bytes()).unwrap();
+	thread::sleep(time::Duration::from_millis(100));
+}

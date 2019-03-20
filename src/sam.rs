@@ -9,7 +9,7 @@ use log::debug;
 use nom::IResult;
 
 use crate::error::{Error, ErrorKind};
-use crate::net::ToI2pSocketAddrs;
+use crate::net::{I2pAddr, I2pSocketAddr};
 use crate::parsers::{sam_hello, sam_naming_reply, sam_session_status, sam_stream_status};
 
 pub static DEFAULT_API: &'static str = "127.0.0.1:7656";
@@ -30,6 +30,7 @@ pub struct SamConnection {
 pub struct Session {
 	sam: SamConnection,
 	local_dest: String,
+	nickname: String,
 }
 
 pub struct StreamConnect {
@@ -143,6 +144,7 @@ impl Session {
 		Ok(Session {
 			sam: sam,
 			local_dest: local_dest,
+			nickname: nickname.to_string(),
 		})
 	}
 
@@ -158,6 +160,7 @@ impl Session {
 		self.sam.duplicate().map(|s| Session {
 			sam: s,
 			local_dest: self.local_dest.clone(),
+			nickname: self.nickname.clone(),
 		}).map_err(|e| e.into())
 	}
 }
@@ -232,53 +235,59 @@ impl Write for StreamConnect {
 
 pub struct StreamForward {
 	session: Session,
-	local_port: u16,
 }
 
 impl StreamForward {
 	pub fn new<A: ToSocketAddrs>(
 		sam_addr: A,
-		bound_port: u16,
 		nickname: &str,
 	) -> Result<StreamForward, Error> {
 		let session = Session::create(sam_addr, "TRANSIENT", nickname, SessionStyle::Stream)?;
-		let mut sam = SamConnection::connect(session.sam_api()?).unwrap();
 
-		let create_stream_msg = format!(
-			"STREAM FORWARD ID={nickname} PORT={port} SILENT=false\n",
-			nickname = nickname,
-			port = bound_port,
-		);
-		sam.send(create_stream_msg, sam_stream_status)?;
-
-		Ok(StreamForward {
-			session: session,
-			local_port: bound_port,
-		})
+		Ok(StreamForward {session})
 	}
 
-	pub fn accept(&self, destination: &str, stream: TcpStream) -> Result<StreamConnect, Error> {
-		let sam_conn = SamConnection {conn: stream};
-		let stream = StreamConnect {
+	pub fn accept(&self) -> Result<(StreamConnect, I2pSocketAddr), Error> {
+		let mut sam_conn = SamConnection::connect(self.session.sam_api()?).unwrap();
+
+		let accept_stream_msg = format!(
+			"STREAM ACCEPT ID={nickname} SILENT=false\n",
+			nickname = self.session.nickname,
+		);
+		sam_conn.send(accept_stream_msg, sam_stream_status)?;
+
+		let mut stream = StreamConnect {
 			sam: sam_conn,
 			session: self.session.duplicate()?,
-			peer_dest: destination.to_string(),
+			peer_dest: "".to_string(),
 			// port only provided with SAM v3.2+ (not on i2pd)
 			peer_port: 0,
-			local_port: self.local_port,
+			local_port: 0,
 		};
+
+		// TODO use a parser combinator, perhaps move down to sam.rs
+		let destination: String = {
+			let mut buf_read = io::BufReader::new(stream.duplicate()?);
+			let mut dest_line = String::new();
+			buf_read.read_line(&mut dest_line)?;
+			dest_line.split(" ").next().unwrap_or("").trim().to_string()
+		};
+		if destination.is_empty() {
+			return Err(ErrorKind::SAMKeyNotFound("No b64 destination in accept".to_string()).into());
+		}
+
+		let addr = I2pSocketAddr::new(I2pAddr::new(&destination), 0);
+		stream.peer_dest = destination;
+	
 		// TODO I2pAddr shouldn't hold the destination directly, but the b32 addr
-		Ok(stream)
+		Ok((stream, addr))
 	}
 
 	pub fn local_addr(&self) -> Result<(String, u16), Error> {
-		Ok((self.session.local_dest.clone(), self.local_port))
+		Ok((self.session.local_dest.clone(), 0))
 	}
 
 	pub fn duplicate(&self) -> Result<StreamForward, Error> {
-		Ok(StreamForward {
-			session: self.session.duplicate()?,
-			local_port: self.local_port,
-		})
+		Ok(StreamForward {session: self.session.duplicate()?})
 	}
 }
