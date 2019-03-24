@@ -2,6 +2,24 @@ use std::cmp::Ordering;
 use std::fmt;
 use std::hash;
 
+use data_encoding::{BASE32, Encoding, Specification};
+use lazy_static::lazy_static;
+use log::error;
+use sha2::{Sha256, Digest};
+
+use crate::error::{Error, ErrorKind};
+
+pub const B32_EXT: &'static str = ".b32.i2p";
+
+lazy_static! {
+	static ref BASE64_I2P: Encoding = {
+		let mut spec = Specification::new();
+		spec.symbols.push_str("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-~");
+		spec.padding = Some('=');
+		spec.encoding().unwrap()
+	};
+}
+
 /// An I2P address, as a Destination, B32 address or hostname.
 ///
 /// # Examples
@@ -39,6 +57,21 @@ impl I2pAddr {
 		I2pAddr {
 			inner: dest.to_string(),
 		}
+	}
+
+	/// Creates a new I2P address from a full base64 destination string. This
+	/// will internally convert it to a common base32 addresse, using the
+	/// b32.i2p extension.
+	pub fn from_b64(dest: &str) -> Result<I2pAddr, Error> {
+		let bin_data = BASE64_I2P.decode(dest.as_bytes()).map_err(|e| {
+			error!("Base64 decoding error: {:?}", e);
+			ErrorKind::BadAddressEncoding(dest.to_string()).to_err()
+		})?;
+		let mut hasher = Sha256::new();
+		hasher.input(bin_data);
+		let mut b32 = BASE32.encode(&hasher.result());
+		b32.push_str(B32_EXT);
+		Ok(I2pAddr{inner: b32})
 	}
 
 	/// Returns the String that makes up this address.
