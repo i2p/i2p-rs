@@ -177,12 +177,16 @@ impl StreamConnect {
 		let mut sam = SamConnection::connect(session.sam_api()?).unwrap();
 		let dest = sam.naming_lookup(destination)?;
 
-		let create_stream_msg = format!(
-			"STREAM CONNECT ID={nickname} DESTINATION={destination} SILENT=false TO_PORT={port}\n",
+		let mut create_stream_msg = format!(
+			"STREAM CONNECT ID={nickname} DESTINATION={destination} SILENT=false\n",
 			nickname = nickname,
 			destination = dest,
-			port = port
 		);
+		if port > 0 {
+			create_stream_msg.push_str(&format!(" TO_PORT={port}\n", port = port));
+		} else {
+			create_stream_msg.push_str("\n");
+		}
 
 		sam.send(create_stream_msg, sam_stream_status)?;
 
@@ -276,10 +280,9 @@ impl StreamForward {
 			return Err(ErrorKind::SAMKeyNotFound("No b64 destination in accept".to_string()).into());
 		}
 
-		let addr = I2pSocketAddr::new(I2pAddr::new(&destination), 0);
+		let addr = I2pSocketAddr::new(I2pAddr::from_b64(&destination)?, 0);
 		stream.peer_dest = destination;
 	
-		// TODO I2pAddr shouldn't hold the destination directly, but the b32 addr
 		Ok((stream, addr))
 	}
 

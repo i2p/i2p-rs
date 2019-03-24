@@ -5,6 +5,7 @@ extern crate log;
 use log::*;
 use std::{thread, time};
 use std::io::{Read, Write};
+use std::str::from_utf8;
 
 use i2p::net::{I2pListener, I2pStream};
 
@@ -22,7 +23,8 @@ fn main() {
 						let mut buffer = [0; 100];
 						loop {
 							let n = stream.read(&mut buffer).unwrap();
-							info!("< {:?}", &buffer[0..n]);
+							info!("< {:?}", from_utf8(&buffer[0..n]).unwrap());
+							stream.write("pong".as_bytes()).unwrap();
 						}
 					});
 				}
@@ -37,5 +39,7 @@ fn main() {
 	let mut client = I2pStream::connect(our_dest).unwrap();
 	let msg = "ping";
 	client.write(msg.as_bytes()).unwrap();
-	thread::sleep(time::Duration::from_millis(100));
+	let mut buffer = [0; 100];
+	let n = client.read(&mut buffer).unwrap();
+	info!("> {:?}", from_utf8(&buffer[0..n]).unwrap());
 }
