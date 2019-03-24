@@ -39,6 +39,14 @@ pub enum ErrorKind {
 	SAMTimeout(String),
 	#[fail(display = "Unknown I2P/SAM error: {}", _0)]
 	SAMI2PError(String),
+	#[fail(display = "I2P address isn't a valid b32 or b64 encoding: {}", _0)]
+	BadAddressEncoding(String),
+}
+
+impl ErrorKind {
+	pub fn to_err(self) -> Error {
+		Error{inner: Context::new(self)}
+	}
 }
 
 impl Display for Error {
