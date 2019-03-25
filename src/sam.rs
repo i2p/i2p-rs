@@ -7,6 +7,9 @@ use std::net::{Shutdown, SocketAddr, TcpStream, ToSocketAddrs};
 
 use log::debug;
 use nom::IResult;
+use rand::distributions::Alphanumeric;
+use rand::{self, Rng};
+
 
 use crate::error::{Error, ErrorKind};
 use crate::net::{I2pAddr, I2pSocketAddr};
@@ -123,6 +126,7 @@ impl SamConnection {
 }
 
 impl Session {
+	/// Create a new session using all provided parameters
 	pub fn create<A: ToSocketAddrs>(
 		sam_addr: A,
 		destination: &str,
@@ -148,6 +152,18 @@ impl Session {
 		})
 	}
 
+	/// Create a new session identified by the provided destination. Auto-generates
+	/// a nickname uniquely associated with the new session.
+	pub fn from_destination<A: ToSocketAddrs>(sam_addr: A, destination: &str) -> Result<Session, Error> {
+		Self::create(sam_addr, destination, &nickname(), SessionStyle::Stream)
+	}
+
+	/// Convenience constructor to create a new transient session with an
+	/// auto-generated nickname.
+	pub fn transient<A: ToSocketAddrs>(sam_addr: A) -> Result<Session, Error> {
+		Self::create(sam_addr, "TRANSIENT", &nickname(), SessionStyle::Stream)
+	}
+
 	pub fn sam_api(&self) -> Result<SocketAddr, Error> {
 		self.sam.conn.peer_addr().map_err(|e| e.into())
 	}
@@ -166,20 +182,27 @@ impl Session {
 }
 
 impl StreamConnect {
+
+	/// Create a new SAM client connection to the provided destination and port.
+	/// Also creates a new transient session to support the connection.
 	pub fn new<A: ToSocketAddrs>(
 		sam_addr: A,
 		destination: &str,
 		port: u16,
-		nickname: &str,
 	) -> Result<StreamConnect, Error> {
-		let session = Session::create(sam_addr, "TRANSIENT", nickname, SessionStyle::Stream)?;
+		let session = Session::transient(sam_addr)?;
+		Self::with_session(&session, destination, port)
+	}
 
+	/// Create a new SAM client connection to the provided destination and port
+	/// using the provided session.
+	pub fn with_session(session: &Session, dest: &str, port: u16) -> Result<StreamConnect, Error> {
 		let mut sam = SamConnection::connect(session.sam_api()?).unwrap();
-		let dest = sam.naming_lookup(destination)?;
+		let dest = sam.naming_lookup(dest)?;
 
 		let mut create_stream_msg = format!(
 			"STREAM CONNECT ID={nickname} DESTINATION={destination} SILENT=false\n",
-			nickname = nickname,
+			nickname = session.nickname,
 			destination = dest,
 		);
 		if port > 0 {
@@ -192,7 +215,7 @@ impl StreamConnect {
 
 		Ok(StreamConnect {
 			sam: sam,
-			session: session,
+			session: session.duplicate()?,
 			peer_dest: dest,
 			peer_port: port,
 			local_port: 0,
@@ -244,11 +267,14 @@ pub struct StreamForward {
 impl StreamForward {
 	pub fn new<A: ToSocketAddrs>(
 		sam_addr: A,
-		nickname: &str,
 	) -> Result<StreamForward, Error> {
-		let session = Session::create(sam_addr, "TRANSIENT", nickname, SessionStyle::Stream)?;
+		Ok(StreamForward {session: Session::transient(sam_addr)?})
+	}
 
-		Ok(StreamForward {session})
+	/// Create a new SAM client connection to the provided destination and port
+	/// using the provided session.
+	pub fn with_session(session: &Session) -> Result<StreamForward, Error> {
+		Ok(StreamForward {session: session.duplicate()?})
 	}
 
 	pub fn accept(&self) -> Result<(StreamConnect, I2pSocketAddr), Error> {
@@ -293,4 +319,12 @@ impl StreamForward {
 	pub fn duplicate(&self) -> Result<StreamForward, Error> {
 		Ok(StreamForward {session: self.session.duplicate()?})
 	}
+}
+
+fn nickname() -> String {
+	let suffix: String = rand::thread_rng()
+		.sample_iter(&Alphanumeric)
+		.take(8)
+		.collect();
+	format!("i2prs-{}", suffix)
 }
