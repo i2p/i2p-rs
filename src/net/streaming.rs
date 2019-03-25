@@ -4,12 +4,9 @@ use std::fmt;
 use std::io;
 use std::net::{Shutdown, SocketAddr, ToSocketAddrs};
 
-use rand::distributions::Alphanumeric;
-use rand::{self, Rng};
-
-use crate::error::Error;
+use crate::error::{Error, ErrorKind};
 use crate::net::{I2pAddr, I2pSocketAddr, ToI2pSocketAddrs};
-use crate::sam::{StreamConnect, StreamForward, DEFAULT_API};
+use crate::sam::{Session, StreamConnect, StreamForward, DEFAULT_API};
 
 /// A structure which represents an I2P stream between a local socket and a
 /// remote socket.
@@ -73,6 +70,16 @@ impl I2pStream {
 		I2pStream::connect_via(DEFAULT_API, addr)
 	}
 
+	/// Same as `connect` but reuses an existing SAM session.
+	pub fn connect_with_session<A: ToI2pSocketAddrs>(
+		session: &Session,
+		addr: A,
+	) -> Result<I2pStream, Error> {
+		let addr: Result<_, Error> = addr.to_socket_addrs()?.next()
+			.ok_or(ErrorKind::UnresolvableAddress.into());
+		I2pStream::connect_addr_with_session(session, &addr?)
+	}
+
 	pub fn connect_via<A: ToSocketAddrs, B: ToI2pSocketAddrs>(
 		sam_addr: A,
 		addr: B,
@@ -81,7 +88,13 @@ impl I2pStream {
 	}
 
 	fn connect_addr(sam_addr: &SocketAddr, addr: &I2pSocketAddr) -> Result<I2pStream, Error> {
-		let stream = StreamConnect::new(sam_addr, &addr.dest().string(), addr.port(), &nickname())?;
+		let stream = StreamConnect::new(sam_addr, &addr.dest().string(), addr.port())?;
+
+		Ok(I2pStream { inner: stream })
+	}
+
+	fn connect_addr_with_session(session: &Session, addr: &I2pSocketAddr) -> Result<I2pStream, Error> {
+		let stream = StreamConnect::with_session(session, &addr.dest().string(), addr.port())?;
 
 		Ok(I2pStream { inner: stream })
 	}
@@ -245,12 +258,17 @@ impl I2pListener {
 		I2pListener::bind_via(DEFAULT_API)
 	}
 
+	pub fn bind_with_session(session: &Session) -> Result<I2pListener, Error> {
+		let forward = StreamForward::with_session(session)?;
+		Ok(I2pListener{forward})
+	}
+
 	pub fn bind_via<A: ToSocketAddrs>(sam_addr: A) -> Result<I2pListener, Error> {
 		super::each_addr(sam_addr, I2pListener::bind_addr).map_err(|e| e.into())
 	}
 
 	fn bind_addr(sam_addr: &SocketAddr) -> Result<I2pListener, Error> {
-		let forward = StreamForward::new(sam_addr, &nickname())?;
+		let forward = StreamForward::new(sam_addr)?;
 		Ok(I2pListener{forward})
 	}
 
@@ -347,12 +365,4 @@ impl<'a> Iterator for Incoming<'a> {
 	fn next(&mut self) -> Option<Result<I2pStream, Error>> {
 		Some(self.listener.accept().map(|p| p.0))
 	}
-}
-
-fn nickname() -> String {
-	let suffix: String = rand::thread_rng()
-		.sample_iter(&Alphanumeric)
-		.take(8)
-		.collect();
-	format!("i2prs-{}", suffix)
 }
