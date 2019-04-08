@@ -13,7 +13,7 @@ use rand::{self, Rng};
 
 use crate::error::{Error, ErrorKind};
 use crate::net::{I2pAddr, I2pSocketAddr};
-use crate::parsers::{sam_hello, sam_naming_reply, sam_session_status, sam_stream_status};
+use crate::parsers::{sam_hello, sam_naming_reply, sam_session_status, sam_stream_status, sam_dest_reply};
 
 pub static DEFAULT_API: &'static str = "127.0.0.1:7656";
 
@@ -107,7 +107,6 @@ impl SamConnection {
 		let tcp_stream = TcpStream::connect(addr)?;
 
 		let mut socket = SamConnection { conn: tcp_stream };
-
 		socket.handshake()?;
 
 		Ok(socket)
@@ -115,9 +114,15 @@ impl SamConnection {
 
 	// TODO: Implement a lookup table
 	pub fn naming_lookup(&mut self, name: &str) -> Result<String, Error> {
-		let create_naming_lookup_msg = format!("NAMING LOOKUP NAME={name} \n", name = name);
-		let ret = self.send(create_naming_lookup_msg, sam_naming_reply)?;
+		let naming_lookup_msg = format!("NAMING LOOKUP NAME={name} \n", name = name);
+		let ret = self.send(naming_lookup_msg, sam_naming_reply)?;
 		Ok(ret["VALUE"].clone())
+	}
+
+	pub fn generate_destination(&mut self) -> Result<(String, String), Error> {
+		let dest_gen_msg = format!("DEST GENERATE \n");
+		let ret = self.send(dest_gen_msg, sam_dest_reply)?;
+		Ok((ret["PUB"].clone(), ret["PRIV"].clone()))
 	}
 
 	pub fn duplicate(&self) -> Result<SamConnection, Error> {
@@ -200,18 +205,18 @@ impl StreamConnect {
 		let mut sam = SamConnection::connect(session.sam_api()?).unwrap();
 		let dest = sam.naming_lookup(dest)?;
 
-		let mut create_stream_msg = format!(
+		let mut stream_msg = format!(
 			"STREAM CONNECT ID={nickname} DESTINATION={destination} SILENT=false\n",
 			nickname = session.nickname,
 			destination = dest,
 		);
 		if port > 0 {
-			create_stream_msg.push_str(&format!(" TO_PORT={port}\n", port = port));
+			stream_msg.push_str(&format!(" TO_PORT={port}\n", port = port));
 		} else {
-			create_stream_msg.push_str("\n");
+			stream_msg.push_str("\n");
 		}
 
-		sam.send(create_stream_msg, sam_stream_status)?;
+		sam.send(stream_msg, sam_stream_status)?;
 
 		Ok(StreamConnect {
 			sam: sam,
