@@ -169,7 +169,7 @@ impl hash::Hash for I2pSocketAddr {
 ///
 ///     // I2pListener::bind(), I2pDatagramSocket::bind() and I2pDatagramSocket::send_to()
 ///     // behave similarly
-///     let i2p_l = I2pListener::bind("localhost:12345");
+///     let i2p_l = I2pListener::bind();
 ///
 ///     let mut i2p_dg_s = I2pDatagramSocket::bind(("127.0.0.1", port)).unwrap();
 ///     i2p_dg_s.send_to(&[7], (dest, 23451)).unwrap();
