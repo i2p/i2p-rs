@@ -216,7 +216,7 @@ impl fmt::Debug for I2pStream {
 /// ```no_run
 /// use i2p::net::{I2pListener, I2pStream};
 ///
-/// let listener = I2pListener::bind("127.0.0.1:80").unwrap();
+/// let listener = I2pListener::bind().unwrap();
 ///
 /// fn handle_client(stream: I2pStream) {
 ///     // ...
@@ -252,7 +252,7 @@ impl I2pListener {
 	/// ```no_run
 	/// use i2p::net::I2pListener;
 	///
-	/// let listener = I2pListener::bind("127.0.0.1:80").unwrap();
+	/// let listener = I2pListener::bind().unwrap();
 	/// ```
 	pub fn bind() -> Result<I2pListener, Error> {
 		I2pListener::bind_via(DEFAULT_API)
@@ -279,7 +279,7 @@ impl I2pListener {
 	/// ```no_run
 	/// use i2p::net::{I2pAddr, I2pSocketAddr, I2pListener};
 	///
-	/// let listener = I2pListener::bind("127.0.0.1:8080").unwrap();
+	/// let listener = I2pListener::bind().unwrap();
 	/// assert_eq!(listener.local_addr().unwrap(),
 	///            I2pSocketAddr::new(I2pAddr::new("example.i2p"), 8080));
 	/// ```
@@ -300,7 +300,7 @@ impl I2pListener {
 	/// ```no_run
 	/// use i2p::net::I2pListener;
 	///
-	/// let listener = I2pListener::bind("127.0.0.1:8080").unwrap();
+	/// let listener = I2pListener::bind().unwrap();
 	/// let listener_clone = listener.try_clone().unwrap();
 	/// ```
 	pub fn try_clone(&self) -> Result<I2pListener, Error> {
@@ -319,7 +319,7 @@ impl I2pListener {
 	/// ```no_run
 	/// use i2p::net::I2pListener;
 	///
-	/// let listener = I2pListener::bind("127.0.0.1:8080").unwrap();
+	/// let listener = I2pListener::bind().unwrap();
 	/// match listener.accept() {
 	///     Ok((_socket, addr)) => println!("new client: {:?}", addr),
 	///     Err(e) => println!("couldn't get client: {:?}", e),
@@ -344,7 +344,7 @@ impl I2pListener {
 	/// ```no_run
 	/// use i2p::net::I2pListener;
 	///
-	/// let listener = I2pListener::bind("127.0.0.1:80").unwrap();
+	/// let listener = I2pListener::bind().unwrap();
 	///
 	/// for stream in listener.incoming() {
 	///     match stream {
