@@ -1,10 +1,9 @@
-use std::cmp::Ordering;
 use std::fmt;
-use std::hash;
 
 use data_encoding::{BASE32, Encoding, Specification};
 use lazy_static::lazy_static;
 use log::error;
+use serde_derive::{Serialize, Deserialize};
 use sha2::{Sha256, Digest};
 
 use crate::error::{Error, ErrorKind};
@@ -39,6 +38,7 @@ lazy_static! {
 ///
 /// I2pAddr::new("abcdefghijklmnopqrstuvwxyz234567abcdefghijklmnopqrst.b32.i2p");
 /// ```
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, Hash)]
 pub struct I2pAddr {
 	inner: String,
 }
@@ -92,43 +92,5 @@ impl I2pAddr {
 impl fmt::Display for I2pAddr {
 	fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
 		write!(fmt, "{}", self.inner)
-	}
-}
-
-impl fmt::Debug for I2pAddr {
-	fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-		fmt::Display::fmt(self, fmt)
-	}
-}
-
-impl Clone for I2pAddr {
-	fn clone(&self) -> I2pAddr {
-		I2pAddr::new(&self.inner)
-	}
-}
-
-impl PartialEq for I2pAddr {
-	fn eq(&self, other: &I2pAddr) -> bool {
-		self.inner == other.inner
-	}
-}
-
-impl Eq for I2pAddr {}
-
-impl hash::Hash for I2pAddr {
-	fn hash<H: hash::Hasher>(&self, s: &mut H) {
-		self.inner.hash(s)
-	}
-}
-
-impl PartialOrd for I2pAddr {
-	fn partial_cmp(&self, other: &I2pAddr) -> Option<Ordering> {
-		Some(self.cmp(other))
-	}
-}
-
-impl Ord for I2pAddr {
-	fn cmp(&self, other: &I2pAddr) -> Ordering {
-		self.inner.cmp(&other.inner)
 	}
 }
