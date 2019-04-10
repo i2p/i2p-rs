@@ -1,13 +1,15 @@
 use std::fmt;
-use std::hash;
 use std::io;
 use std::iter;
 use std::option;
 use std::slice;
 use std::vec;
 
+use serde_derive::{Serialize, Deserialize};
+
 use crate::net::i2p::I2pAddr;
 
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, Hash)]
 pub struct I2pSocketAddr {
 	port: u16,
 	dest: I2pAddr,
@@ -94,31 +96,6 @@ impl I2pSocketAddr {
 impl fmt::Display for I2pSocketAddr {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		write!(f, "{}:{}", self.dest(), self.port())
-	}
-}
-
-impl fmt::Debug for I2pSocketAddr {
-	fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-		fmt::Display::fmt(self, fmt)
-	}
-}
-
-impl Clone for I2pSocketAddr {
-	fn clone(&self) -> I2pSocketAddr {
-		I2pSocketAddr::new(self.dest.clone(), self.port)
-	}
-}
-
-impl PartialEq for I2pSocketAddr {
-	fn eq(&self, other: &I2pSocketAddr) -> bool {
-		self.port == other.port && self.dest == other.dest
-	}
-}
-impl Eq for I2pSocketAddr {}
-
-impl hash::Hash for I2pSocketAddr {
-	fn hash<H: hash::Hasher>(&self, s: &mut H) {
-		(self.port, &self.dest).hash(s)
 	}
 }
 
