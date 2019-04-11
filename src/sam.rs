@@ -125,6 +125,10 @@ impl SamConnection {
 		Ok((ret["PUB"].clone(), ret["PRIV"].clone()))
 	}
 
+	pub fn set_nonblocking(&self, nonblocking: bool) -> Result<(), Error> {
+		self.conn.set_nonblocking(nonblocking).map_err(|e| e.into())
+	}
+
 	pub fn duplicate(&self) -> Result<SamConnection, Error> {
 		self.conn.try_clone().map(|s| SamConnection { conn: s }).map_err(|e| e.into())
 	}
@@ -233,6 +237,10 @@ impl StreamConnect {
 
 	pub fn local_addr(&self) -> Result<(String, u16), Error> {
 		Ok((self.session.local_dest.clone(), self.local_port))
+	}
+
+	pub fn set_nonblocking(&self, nonblocking: bool) -> Result<(), Error> {
+		self.sam.set_nonblocking(nonblocking)
 	}
 
 	pub fn shutdown(&self, how: Shutdown) -> Result<(), Error> {

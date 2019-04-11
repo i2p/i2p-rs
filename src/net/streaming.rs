@@ -135,6 +135,16 @@ impl I2pStream {
 			.map(|(d, p)| I2pSocketAddr::new(I2pAddr::new(&d), p))
 	}
 
+	/// Moves this I2P stream into or out of nonblocking mode. This will
+	/// result in read, write, recv and send operations becoming nonblocking,
+	/// i.e., immediately returning from their calls. If the IO operation is
+	/// successful, Ok is returned and no further action is required. If the
+	/// IO operation could not be completed and needs to be retried, a wrapped
+	/// Io error with kind io::ErrorKind::WouldBlock is returned.
+	pub fn set_nonblocking(&self, nonblocking: bool) -> Result<(), Error> {
+		self.inner.set_nonblocking(nonblocking)
+	}
+
 	/// Shuts down the read, write, or both halves of this connection.
 	///
 	/// This function will cause all pending and future I/O on the specified
