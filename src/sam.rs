@@ -8,7 +8,7 @@ use std::net::{Shutdown, SocketAddr, TcpStream, ToSocketAddrs};
 
 use nom::IResult;
 
-use parsers::{sam_hello, sam_naming_reply, sam_session_status, sam_stream_status};
+use crate::parsers::{sam_hello, sam_naming_reply, sam_session_status, sam_stream_status};
 
 pub static DEFAULT_API: &'static str = "127.0.0.1:7656";
 

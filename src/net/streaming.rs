@@ -7,8 +7,8 @@ use std::net::{Shutdown, SocketAddr, ToSocketAddrs};
 use rand;
 use rand::Rng;
 
-use net::{I2pAddr, I2pSocketAddr, ToI2pSocketAddrs};
-use sam::{StreamConnect, DEFAULT_API};
+use crate::net::{I2pAddr, I2pSocketAddr, ToI2pSocketAddrs};
+use crate::sam::{StreamConnect, DEFAULT_API};
 
 /// A structure which represents an I2P stream between a local socket and a
 /// remote socket.
@@ -255,7 +255,7 @@ impl I2pListener {
         super::each_addr(sam_addr, addr, I2pListener::bind_addr)
     }
 
-    fn bind_addr(sam_addr: &SocketAddr, addr: &I2pSocketAddr) -> io::Result<I2pListener> {
+    fn bind_addr(_sam_addr: &SocketAddr, _addr: &I2pSocketAddr) -> io::Result<I2pListener> {
         unimplemented!();
     }
 
@@ -351,7 +351,7 @@ impl<'a> Iterator for Incoming<'a> {
 }
 
 impl fmt::Debug for I2pListener {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, _f: &mut fmt::Formatter) -> fmt::Result {
         unimplemented!()
     }
 }

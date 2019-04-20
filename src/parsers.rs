@@ -91,7 +91,7 @@ mod tests {
 
     #[test]
     fn hello() {
-        use parsers::sam_hello;
+        use crate::parsers::sam_hello;
 
         assert_eq!(
             sam_hello("HELLO REPLY RESULT=OK VERSION=3.1\n"),
@@ -112,7 +112,7 @@ mod tests {
 
     #[test]
     fn session_status() {
-        use parsers::sam_session_status;
+        use crate::parsers::sam_session_status;
 
         assert_eq!(
             sam_session_status("SESSION STATUS RESULT=OK DESTINATION=privkey\n"),
@@ -126,7 +126,7 @@ mod tests {
 
     #[test]
     fn stream_status() {
-        use parsers::sam_stream_status;
+        use crate::parsers::sam_stream_status;
 
         assert_eq!(
             sam_stream_status("STREAM STATUS RESULT=OK\n"),
@@ -148,7 +148,7 @@ mod tests {
 
     #[test]
     fn naming_reply() {
-        use parsers::sam_naming_reply;
+        use crate::parsers::sam_naming_reply;
 
         assert_eq!(
             sam_naming_reply("NAMING REPLY RESULT=OK NAME=name VALUE=dest\n"),
@@ -174,7 +174,7 @@ mod tests {
 
     #[test]
     fn dest_reply() {
-        use parsers::sam_dest_reply;
+        use crate::parsers::sam_dest_reply;
 
         assert_eq!(
             sam_dest_reply("DEST REPLY PUB=foo PRIV=foobar\n"),
