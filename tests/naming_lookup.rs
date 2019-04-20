@@ -1,5 +1,3 @@
-extern crate i2p;
-
 #[test]
 #[ignore]
 fn naming_lookup() {

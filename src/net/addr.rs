@@ -92,13 +92,13 @@ impl I2pSocketAddr {
 }
 
 impl fmt::Display for I2pSocketAddr {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}:{}", self.dest(), self.port())
     }
 }
 
 impl fmt::Debug for I2pSocketAddr {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::Display::fmt(self, fmt)
     }
 }

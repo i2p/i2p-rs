@@ -211,7 +211,7 @@ impl Write for I2pStream {
 }
 
 impl fmt::Debug for I2pStream {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut res = f.debug_struct("I2pStream");
 
         if let Ok(addr) = self.local_addr() {
@@ -338,7 +338,7 @@ impl I2pListener {
     ///     }
     /// }
     /// ```
-    pub fn incoming(&self) -> Incoming {
+    pub fn incoming(&self) -> Incoming<'_> {
         Incoming { listener: self }
     }
 }
@@ -351,7 +351,7 @@ impl<'a> Iterator for Incoming<'a> {
 }
 
 impl fmt::Debug for I2pListener {
-    fn fmt(&self, _f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, _f: &mut fmt::Formatter<'_>) -> fmt::Result {
         unimplemented!()
     }
 }

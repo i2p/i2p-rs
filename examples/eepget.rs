@@ -1,5 +1,3 @@
-extern crate i2p;
-
 use i2p::net::I2pStream;
 use std::env;
 use std::io::{BufReader, Read, Write};
