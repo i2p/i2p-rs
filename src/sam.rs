@@ -3,7 +3,7 @@ use std::io::prelude::*;
 use std::clone::Clone;
 use std::collections::HashMap;
 use std::io;
-use std::io::{Error, ErrorKind, BufReader};
+use std::io::{BufReader, Error, ErrorKind};
 use std::net::{Shutdown, SocketAddr, TcpStream, ToSocketAddrs};
 
 use nom::IResult;
@@ -55,9 +55,9 @@ fn verify_response<'a>(vec: &'a [(&str, &str)]) -> Result<HashMap<&'a str, &'a s
     let msg = map.get("MESSAGE").unwrap_or(&"").clone();
     match res {
         "OK" => Ok(map),
-        "CANT_REACH_PEER" |
-        "KEY_NOT_FOUND" |
-        "PEER_NOT_FOUND" => Err(Error::new(ErrorKind::NotFound, msg)),
+        "CANT_REACH_PEER" | "KEY_NOT_FOUND" | "PEER_NOT_FOUND" => {
+            Err(Error::new(ErrorKind::NotFound, msg))
+        }
         "DUPLICATED_DEST" => Err(Error::new(ErrorKind::AddrInUse, msg)),
         "INVALID_KEY" | "INVALID_ID" => Err(Error::new(ErrorKind::InvalidInput, msg)),
         "TIMEOUT" => Err(Error::new(ErrorKind::TimedOut, msg)),
@@ -81,19 +81,19 @@ impl SamConnection {
 
         let response = reply_parser(&buffer);
         let vec_opts = response.unwrap().1;
-        verify_response(&vec_opts).map(
-            |m| {
-                m.iter()
-                    .map(|(k, v)| (k.to_string(), v.to_string()))
-                    .collect()
-            },
-        )
+        verify_response(&vec_opts).map(|m| {
+            m.iter()
+                .map(|(k, v)| (k.to_string(), v.to_string()))
+                .collect()
+        })
     }
 
     fn handshake(&mut self) -> Result<HashMap<String, String>, Error> {
-        let hello_msg = format!("HELLO VERSION MIN={min} MAX={max} \n",
-                                min = SAM_MIN,
-                                max = SAM_MAX);
+        let hello_msg = format!(
+            "HELLO VERSION MIN={min} MAX={max} \n",
+            min = SAM_MIN,
+            max = SAM_MAX
+        );
         self.send(hello_msg, sam_hello)
     }
 
@@ -127,21 +127,21 @@ impl Session {
         style: SessionStyle,
     ) -> Result<Session, Error> {
         let mut sam = SamConnection::connect(sam_addr).unwrap();
-        let create_session_msg = format!("SESSION CREATE STYLE={style} ID={nickname} DESTINATION={destination} \n",
-                                         style = style.string(),
-                                         nickname = nickname,
-                                         destination = destination);
+        let create_session_msg = format!(
+            "SESSION CREATE STYLE={style} ID={nickname} DESTINATION={destination} \n",
+            style = style.string(),
+            nickname = nickname,
+            destination = destination
+        );
 
         sam.send(create_session_msg, sam_session_status)?;
 
         let local_dest = sam.naming_lookup("ME")?;
 
-        Ok(
-            Session {
-                sam: sam,
-                local_dest: local_dest,
-            },
-        )
+        Ok(Session {
+            sam: sam,
+            local_dest: local_dest,
+        })
     }
 
     pub fn sam_api(&self) -> io::Result<SocketAddr> {
@@ -153,16 +153,10 @@ impl Session {
     }
 
     pub fn duplicate(&self) -> io::Result<Session> {
-        self.sam
-            .duplicate()
-            .map(
-                |s| {
-                    Session {
-                        sam: s,
-                        local_dest: self.local_dest.clone(),
-                    }
-                },
-            )
+        self.sam.duplicate().map(|s| Session {
+            sam: s,
+            local_dest: self.local_dest.clone(),
+        })
     }
 }
 
@@ -176,24 +170,24 @@ impl StreamConnect {
         let mut session = Session::create(sam_addr, "TRANSIENT", nickname, SessionStyle::Stream)?;
 
         let mut sam = SamConnection::connect(session.sam_api()?).unwrap();
-        let create_stream_msg = format!("STREAM CONNECT ID={nickname} DESTINATION={destination} SILENT=false TO_PORT={port}\n",
-                                         nickname = nickname,
-                                         destination = destination,
-                                         port = port);
+        let create_stream_msg = format!(
+            "STREAM CONNECT ID={nickname} DESTINATION={destination} SILENT=false TO_PORT={port}\n",
+            nickname = nickname,
+            destination = destination,
+            port = port
+        );
 
         sam.send(create_stream_msg, sam_stream_status)?;
 
         let peer_dest = session.naming_lookup(destination)?;
 
-        Ok(
-            StreamConnect {
-                sam: sam,
-                session: session,
-                peer_dest: peer_dest,
-                peer_port: port,
-                local_port: 0,
-            },
-        )
+        Ok(StreamConnect {
+            sam: sam,
+            session: session,
+            peer_dest: peer_dest,
+            peer_port: port,
+            local_port: 0,
+        })
     }
 
     pub fn peer_addr(&self) -> io::Result<(String, u16)> {
@@ -209,15 +203,13 @@ impl StreamConnect {
     }
 
     pub fn duplicate(&self) -> io::Result<StreamConnect> {
-        Ok(
-            StreamConnect {
-                sam: self.sam.duplicate()?,
-                session: self.session.duplicate()?,
-                peer_dest: self.peer_dest.clone(),
-                peer_port: self.peer_port,
-                local_port: self.local_port,
-            },
-        )
+        Ok(StreamConnect {
+            sam: self.sam.duplicate()?,
+            session: self.session.duplicate()?,
+            peer_dest: self.peer_dest.clone(),
+            peer_port: self.peer_port,
+            local_port: self.local_port,
+        })
     }
 }
 

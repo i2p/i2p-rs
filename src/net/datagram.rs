@@ -53,7 +53,10 @@ impl I2pDatagramSocket {
         I2pDatagramSocket::bind_via(DEFAULT_API, addr)
     }
 
-    pub fn bind_via<A: ToSocketAddrs, B: ToI2pSocketAddrs>(sam_addr: A, addr: B) -> io::Result<I2pDatagramSocket> {
+    pub fn bind_via<A: ToSocketAddrs, B: ToI2pSocketAddrs>(
+        sam_addr: A,
+        addr: B,
+    ) -> io::Result<I2pDatagramSocket> {
         super::each_addr(sam_addr, addr, I2pDatagramSocket::bind_addr)
     }
 
@@ -115,12 +118,13 @@ impl I2pDatagramSocket {
     /// let socket = I2pDatagramSocket::bind("127.0.0.1:34254").expect("couldn't bind to address");
     /// socket.send_to(&[0; 10], "127.0.0.1:4242").expect("couldn't send data");
     /// ```
-    pub fn send_to<A: ToI2pSocketAddrs>(&self, buf: &[u8], addr: A)
-                                     -> io::Result<usize> {
+    pub fn send_to<A: ToI2pSocketAddrs>(&self, buf: &[u8], addr: A) -> io::Result<usize> {
         match addr.to_socket_addrs()?.next() {
             Some(addr) => unimplemented!(),
-            None => Err(Error::new(ErrorKind::InvalidInput,
-                                   "no addresses to send data to")),
+            None => Err(Error::new(
+                ErrorKind::InvalidInput,
+                "no addresses to send data to",
+            )),
         }
     }
 
@@ -173,7 +177,11 @@ impl I2pDatagramSocket {
         self.connect_via(DEFAULT_API, addr)
     }
 
-    pub fn connect_via<A: ToSocketAddrs, B: ToI2pSocketAddrs>(&self, sam_addr: A, addr: B) -> io::Result<()> {
+    pub fn connect_via<A: ToSocketAddrs, B: ToI2pSocketAddrs>(
+        &self,
+        sam_addr: A,
+        addr: B,
+    ) -> io::Result<()> {
         super::each_addr(sam_addr, addr, |sam_addr, addr| unimplemented!())
     }
 

@@ -36,7 +36,9 @@ impl I2pAddr {
     /// let addr = I2pAddr::new("example.i2p");
     /// ```
     pub fn new(dest: &str) -> I2pAddr {
-        I2pAddr { inner: dest.to_string() }
+        I2pAddr {
+            inner: dest.to_string(),
+        }
     }
 
     /// Returns the String that makes up this address.

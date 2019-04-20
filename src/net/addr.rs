@@ -223,13 +223,12 @@ impl ToI2pSocketAddrs for str {
     type Iter = vec::IntoIter<I2pSocketAddr>;
     fn to_socket_addrs(&self) -> io::Result<vec::IntoIter<I2pSocketAddr>> {
         macro_rules! try_opt {
-            ($e:expr, $msg:expr) => (
+            ($e:expr, $msg:expr) => {
                 match $e {
                     Some(r) => r,
-                    None => return Err(io::Error::new(io::ErrorKind::InvalidInput,
-                                                      $msg)),
+                    None => return Err(io::Error::new(io::ErrorKind::InvalidInput, $msg)),
                 }
-            )
+            };
         }
 
         // split the string by ':' and convert the second part to u16
@@ -265,8 +264,8 @@ impl ToI2pSocketAddrs for String {
 
 #[cfg(test)]
 mod tests {
+    use net::test::{isa, tsa};
     use net::*;
-    use net::test::{tsa, isa};
 
     #[test]
     fn to_socket_addr_i2paddr_u16() {
