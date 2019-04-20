@@ -9,6 +9,7 @@ readme = "README.md"
 categories = ["network-programming"]
 keywords = ["i2p", "net", "network", "sam"]
 license = "MIT"
+edition = "2018"
 
 [badges]
 travis-ci = { repository = "i2p/i2p-rs" }
