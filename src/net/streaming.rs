@@ -7,8 +7,8 @@ use std::net::{Shutdown, SocketAddr, ToSocketAddrs};
 use rand;
 use rand::Rng;
 
-use net::{I2pAddr, I2pSocketAddr, ToI2pSocketAddrs};
-use sam::{DEFAULT_API, StreamConnect};
+use crate::net::{I2pAddr, I2pSocketAddr, ToI2pSocketAddrs};
+use crate::sam::{StreamConnect, DEFAULT_API};
 
 /// A structure which represents an I2P stream between a local socket and a
 /// remote socket.
@@ -71,7 +71,9 @@ pub struct I2pListener {}
 /// [`incoming`]: struct.I2pListener.html#method.incoming
 /// [`I2pListener`]: struct.I2pListener.html
 #[derive(Debug)]
-pub struct Incoming<'a> { listener: &'a I2pListener }
+pub struct Incoming<'a> {
+    listener: &'a I2pListener,
+}
 
 impl I2pStream {
     /// Opens a TCP-like connection to a remote host.
@@ -98,7 +100,10 @@ impl I2pStream {
         I2pStream::connect_via(DEFAULT_API, addr)
     }
 
-    pub fn connect_via<A: ToSocketAddrs, B: ToI2pSocketAddrs>(sam_addr: A, addr: B) -> io::Result<I2pStream> {
+    pub fn connect_via<A: ToSocketAddrs, B: ToI2pSocketAddrs>(
+        sam_addr: A,
+        addr: B,
+    ) -> io::Result<I2pStream> {
         super::each_addr(sam_addr, addr, I2pStream::connect_addr)
     }
 
@@ -124,7 +129,9 @@ impl I2pStream {
     ///            I2pSocketAddr::new(I2pAddr::new("example.i2p"), 8080));
     /// ```
     pub fn peer_addr(&self) -> io::Result<I2pSocketAddr> {
-        self.inner.peer_addr().map(|(d, p)| I2pSocketAddr::new(I2pAddr::new(&d), p))
+        self.inner
+            .peer_addr()
+            .map(|(d, p)| I2pSocketAddr::new(I2pAddr::new(&d), p))
     }
 
     /// Returns the socket address of the local half of this I2P connection.
@@ -140,7 +147,9 @@ impl I2pStream {
     ///            I2pSocketAddr::new(I2pAddr::new("example.i2p"), 8080));
     /// ```
     pub fn local_addr(&self) -> io::Result<I2pSocketAddr> {
-        self.inner.local_addr().map(|(d, p)| I2pSocketAddr::new(I2pAddr::new(&d), p))
+        self.inner
+            .local_addr()
+            .map(|(d, p)| I2pSocketAddr::new(I2pAddr::new(&d), p))
     }
 
     /// Shuts down the read, write, or both halves of this connection.
@@ -202,7 +211,7 @@ impl Write for I2pStream {
 }
 
 impl fmt::Debug for I2pStream {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut res = f.debug_struct("I2pStream");
 
         if let Ok(addr) = self.local_addr() {
@@ -239,11 +248,14 @@ impl I2pListener {
         I2pListener::bind_via(DEFAULT_API, addr)
     }
 
-    pub fn bind_via<A: ToSocketAddrs, B: ToI2pSocketAddrs>(sam_addr: A, addr: B) -> io::Result<I2pListener> {
+    pub fn bind_via<A: ToSocketAddrs, B: ToI2pSocketAddrs>(
+        sam_addr: A,
+        addr: B,
+    ) -> io::Result<I2pListener> {
         super::each_addr(sam_addr, addr, I2pListener::bind_addr)
     }
 
-    fn bind_addr(sam_addr: &SocketAddr, addr: &I2pSocketAddr) -> io::Result<I2pListener> {
+    fn bind_addr(_sam_addr: &SocketAddr, _addr: &I2pSocketAddr) -> io::Result<I2pListener> {
         unimplemented!();
     }
 
@@ -326,7 +338,7 @@ impl I2pListener {
     ///     }
     /// }
     /// ```
-    pub fn incoming(&self) -> Incoming {
+    pub fn incoming(&self) -> Incoming<'_> {
         Incoming { listener: self }
     }
 }
@@ -339,7 +351,7 @@ impl<'a> Iterator for Incoming<'a> {
 }
 
 impl fmt::Debug for I2pListener {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, _f: &mut fmt::Formatter<'_>) -> fmt::Result {
         unimplemented!()
     }
 }

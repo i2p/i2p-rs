@@ -6,7 +6,7 @@ use std::option;
 use std::slice;
 use std::vec;
 
-use net::i2p::I2pAddr;
+use crate::net::i2p::I2pAddr;
 
 pub struct I2pSocketAddr {
     port: u16,
@@ -92,13 +92,13 @@ impl I2pSocketAddr {
 }
 
 impl fmt::Display for I2pSocketAddr {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}:{}", self.dest(), self.port())
     }
 }
 
 impl fmt::Debug for I2pSocketAddr {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::Display::fmt(self, fmt)
     }
 }
@@ -223,13 +223,12 @@ impl ToI2pSocketAddrs for str {
     type Iter = vec::IntoIter<I2pSocketAddr>;
     fn to_socket_addrs(&self) -> io::Result<vec::IntoIter<I2pSocketAddr>> {
         macro_rules! try_opt {
-            ($e:expr, $msg:expr) => (
+            ($e:expr, $msg:expr) => {
                 match $e {
                     Some(r) => r,
-                    None => return Err(io::Error::new(io::ErrorKind::InvalidInput,
-                                                      $msg)),
+                    None => return Err(io::Error::new(io::ErrorKind::InvalidInput, $msg)),
                 }
-            )
+            };
         }
 
         // split the string by ':' and convert the second part to u16
@@ -265,8 +264,8 @@ impl ToI2pSocketAddrs for String {
 
 #[cfg(test)]
 mod tests {
-    use net::*;
-    use net::test::{tsa, isa};
+    use crate::net::test::{isa, tsa};
+    use crate::net::*;
 
     #[test]
     fn to_socket_addr_i2paddr_u16() {

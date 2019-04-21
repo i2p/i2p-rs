@@ -1,4 +1,4 @@
-use nom::{space, alphanumeric};
+use nom::{alphanumeric, space};
 
 fn is_space(chr: char) -> bool {
     chr == ' ' || chr == '\t'
@@ -85,74 +85,100 @@ named!(pub sam_dest_reply <&str, Vec<(&str, &str)> >,
 
 #[cfg(test)]
 mod tests {
+    use nom::ErrorKind;
     use nom::IResult::Done;
     use nom::IResult::Error;
-    use nom::ErrorKind;
 
     #[test]
     fn hello() {
-        use parsers::sam_hello;
+        use crate::parsers::sam_hello;
 
         assert_eq!(
             sam_hello("HELLO REPLY RESULT=OK VERSION=3.1\n"),
-            Done("", vec![("RESULT", "OK"), ("VERSION", "3.1")]));
+            Done("", vec![("RESULT", "OK"), ("VERSION", "3.1")])
+        );
         assert_eq!(
             sam_hello("HELLO REPLY RESULT=NOVERSION\n"),
-            Done("", vec![("RESULT", "NOVERSION")]));
+            Done("", vec![("RESULT", "NOVERSION")])
+        );
         assert_eq!(
             sam_hello("HELLO REPLY RESULT=I2P_ERROR MESSAGE=\"Something failed\"\n"),
-            Done("", vec![("RESULT", "I2P_ERROR"), ("MESSAGE", "Something failed")]));
+            Done(
+                "",
+                vec![("RESULT", "I2P_ERROR"), ("MESSAGE", "Something failed")]
+            )
+        );
     }
 
     #[test]
     fn session_status() {
-        use parsers::sam_session_status;
+        use crate::parsers::sam_session_status;
 
         assert_eq!(
             sam_session_status("SESSION STATUS RESULT=OK DESTINATION=privkey\n"),
-            Done("", vec![("RESULT", "OK"), ("DESTINATION", "privkey")]));
+            Done("", vec![("RESULT", "OK"), ("DESTINATION", "privkey")])
+        );
         assert_eq!(
             sam_session_status("SESSION STATUS RESULT=DUPLICATED_ID\n"),
-            Done("", vec![("RESULT", "DUPLICATED_ID")]));
+            Done("", vec![("RESULT", "DUPLICATED_ID")])
+        );
     }
 
     #[test]
     fn stream_status() {
-        use parsers::sam_stream_status;
+        use crate::parsers::sam_stream_status;
 
         assert_eq!(
             sam_stream_status("STREAM STATUS RESULT=OK\n"),
-            Done("", vec![("RESULT", "OK")]));
+            Done("", vec![("RESULT", "OK")])
+        );
         assert_eq!(
-            sam_stream_status("STREAM STATUS RESULT=CANT_REACH_PEER MESSAGE=\"Can't reach peer\"\n"),
-            Done("", vec![("RESULT", "CANT_REACH_PEER"), ("MESSAGE", "Can't reach peer")]));
+            sam_stream_status(
+                "STREAM STATUS RESULT=CANT_REACH_PEER MESSAGE=\"Can't reach peer\"\n"
+            ),
+            Done(
+                "",
+                vec![
+                    ("RESULT", "CANT_REACH_PEER"),
+                    ("MESSAGE", "Can't reach peer")
+                ]
+            )
+        );
     }
 
     #[test]
     fn naming_reply() {
-        use parsers::sam_naming_reply;
+        use crate::parsers::sam_naming_reply;
 
         assert_eq!(
             sam_naming_reply("NAMING REPLY RESULT=OK NAME=name VALUE=dest\n"),
-            Done("", vec![("RESULT", "OK"), ("NAME", "name"), ("VALUE", "dest")]));
+            Done(
+                "",
+                vec![("RESULT", "OK"), ("NAME", "name"), ("VALUE", "dest")]
+            )
+        );
         assert_eq!(
             sam_naming_reply("NAMING REPLY RESULT=KEY_NOT_FOUND\n"),
-            Done("", vec![("RESULT", "KEY_NOT_FOUND")]));
+            Done("", vec![("RESULT", "KEY_NOT_FOUND")])
+        );
 
         assert_eq!(
             sam_naming_reply("NAMINGREPLY RESULT=KEY_NOT_FOUND\n"),
-            Error(ErrorKind::Tag));
+            Error(ErrorKind::Tag)
+        );
         assert_eq!(
             sam_naming_reply("NAMING  REPLY RESULT=KEY_NOT_FOUND\n"),
-            Error(ErrorKind::Tag));
+            Error(ErrorKind::Tag)
+        );
     }
 
     #[test]
     fn dest_reply() {
-        use parsers::sam_dest_reply;
+        use crate::parsers::sam_dest_reply;
 
         assert_eq!(
             sam_dest_reply("DEST REPLY PUB=foo PRIV=foobar\n"),
-            Done("", vec![("PUB", "foo"), ("PRIV", "foobar")]));
+            Done("", vec![("PUB", "foo"), ("PRIV", "foobar")])
+        );
     }
 }
