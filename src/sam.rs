@@ -172,10 +172,12 @@ impl StreamConnect {
         let mut sam = SamConnection::connect(session.sam_api()?).unwrap();
         let dest = sam.naming_lookup(destination);
 
-        let create_stream_msg = format!("STREAM CONNECT ID={nickname} DESTINATION={destination} SILENT=false TO_PORT={port}\n",
-                                         nickname = nickname,
-                                         destination = dest.unwrap(),
-                                         port = port);
+        let create_stream_msg = format!(
+            "STREAM CONNECT ID={nickname} DESTINATION={destination} SILENT=false TO_PORT={port}\n",
+            nickname = nickname,
+            destination = dest.unwrap(),
+            port = port
+        );
 
         sam.send(create_stream_msg, sam_stream_status)?;
 
