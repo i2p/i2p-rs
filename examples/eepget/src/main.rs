@@ -1,6 +1,5 @@
-extern crate env_logger;
-extern crate i2p;
 
+use env_logger;
 use i2p::net::I2pStream;
 use std::env;
 use std::io::{BufReader, Read, Write};

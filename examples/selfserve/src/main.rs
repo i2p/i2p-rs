@@ -1,7 +1,4 @@
-extern crate env_logger;
-extern crate i2p;
-extern crate log;
-
+use env_logger;
 use log::*;
 use std::{thread, time};
 use std::io::{Read, Write};
