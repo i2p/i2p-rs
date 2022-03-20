@@ -144,7 +144,10 @@ impl Session {
 	) -> Result<Session, Error> {
 		let mut sam = SamConnection::connect(sam_addr)?;
 		let create_session_msg = format!(
-			"SESSION CREATE STYLE={style} ID={nickname} DESTINATION={destination} SIGNATURE_TYPE=EdDSA_SHA512_Ed25519\n",
+			// values for SIGNATURE_TYPE and leaseSetEncType taken from
+			// https://github.com/eyedeekay/goSam/blob/62cade9ebc26e48ff32a517ef94212fc90aa92cd/client.go#L169
+			// https://github.com/eyedeekay/goSam/blob/62cade9ebc26e48ff32a517ef94212fc90aa92cd/client.go#L166
+			"SESSION CREATE STYLE={style} ID={nickname} DESTINATION={destination} SIGNATURE_TYPE=EdDSA_SHA512_Ed25519 i2cp.leaseSetEncType=4,0\n",
 			style = style.string(),
 			nickname = nickname,
 			destination = destination
