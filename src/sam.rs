@@ -144,7 +144,7 @@ impl Session {
 	) -> Result<Session, Error> {
 		let mut sam = SamConnection::connect(sam_addr)?;
 		let create_session_msg = format!(
-			"SESSION CREATE STYLE={style} ID={nickname} DESTINATION={destination} \n",
+			"SESSION CREATE STYLE={style} ID={nickname} DESTINATION={destination} SIGNATURE_TYPE=EdDSA_SHA512_Ed25519\n",
 			style = style.string(),
 			nickname = nickname,
 			destination = destination
