@@ -1,4 +1,3 @@
-
 use env_logger;
 use i2p::net::I2pStream;
 use std::env;

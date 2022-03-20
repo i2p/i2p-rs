@@ -1,5 +1,5 @@
-use std::net::{SocketAddr, ToSocketAddrs};
 use crate::error::{Error, ErrorKind};
+use std::net::{SocketAddr, ToSocketAddrs};
 
 pub use self::addr::{I2pSocketAddr, ToI2pSocketAddrs};
 pub use self::datagram::I2pDatagramSocket;
@@ -33,10 +33,7 @@ where
 	Err(last_err.unwrap_or(ErrorKind::UnresolvableAddress.into()))
 }
 
-fn each_addr<A: ToSocketAddrs, F, T>(
-	sam_addr: A,
-	mut f: F,
-) -> Result<T, Error>
+fn each_addr<A: ToSocketAddrs, F, T>(sam_addr: A, mut f: F) -> Result<T, Error>
 where
 	F: FnMut(&SocketAddr) -> Result<T, Error>,
 {

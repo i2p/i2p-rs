@@ -75,7 +75,9 @@ impl I2pStream {
 		session: &Session,
 		addr: A,
 	) -> Result<I2pStream, Error> {
-		let addr: Result<_, Error> = addr.to_socket_addrs()?.next()
+		let addr: Result<_, Error> = addr
+			.to_socket_addrs()?
+			.next()
 			.ok_or(ErrorKind::UnresolvableAddress.into());
 		I2pStream::connect_addr_with_session(session, &addr?)
 	}
@@ -93,7 +95,10 @@ impl I2pStream {
 		Ok(I2pStream { inner: stream })
 	}
 
-	fn connect_addr_with_session(session: &Session, addr: &I2pSocketAddr) -> Result<I2pStream, Error> {
+	fn connect_addr_with_session(
+		session: &Session,
+		addr: &I2pSocketAddr,
+	) -> Result<I2pStream, Error> {
 		let stream = StreamConnect::with_session(session, &addr.dest().string(), addr.port())?;
 
 		Ok(I2pStream { inner: stream })
@@ -270,7 +275,7 @@ impl I2pListener {
 
 	pub fn bind_with_session(session: &Session) -> Result<I2pListener, Error> {
 		let forward = StreamForward::with_session(session)?;
-		Ok(I2pListener{forward})
+		Ok(I2pListener { forward })
 	}
 
 	pub fn bind_via<A: ToSocketAddrs>(sam_addr: A) -> Result<I2pListener, Error> {
@@ -279,7 +284,7 @@ impl I2pListener {
 
 	fn bind_addr(sam_addr: &SocketAddr) -> Result<I2pListener, Error> {
 		let forward = StreamForward::new(sam_addr)?;
-		Ok(I2pListener{forward})
+		Ok(I2pListener { forward })
 	}
 
 	/// Returns the local socket address of this listener.
@@ -315,7 +320,7 @@ impl I2pListener {
 	/// ```
 	pub fn try_clone(&self) -> Result<I2pListener, Error> {
 		let forward = self.forward.duplicate()?;
-		Ok(I2pListener{forward})
+		Ok(I2pListener { forward })
 	}
 
 	/// Accept a new incoming connection from this listener.
@@ -337,7 +342,7 @@ impl I2pListener {
 	/// ```
 	pub fn accept(&self) -> Result<(I2pStream, I2pSocketAddr), Error> {
 		let (i2p_stream, addr) = self.forward.accept()?;
-		Ok((I2pStream{inner: i2p_stream}, addr))
+		Ok((I2pStream { inner: i2p_stream }, addr))
 	}
 
 	/// Returns an iterator over the connections being received on this

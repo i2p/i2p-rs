@@ -1,8 +1,8 @@
 use env_logger;
 use log::*;
-use std::{thread, time};
 use std::io::{Read, Write};
 use std::str::from_utf8;
+use std::{thread, time};
 
 use i2p::net::{I2pListener, I2pStream};
 

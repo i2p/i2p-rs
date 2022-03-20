@@ -45,41 +45,43 @@ pub enum ErrorKind {
 
 impl ErrorKind {
 	pub fn to_err(self) -> Error {
-		Error{inner: Context::new(self)}
+		Error {
+			inner: Context::new(self),
+		}
 	}
 }
 
 impl Display for Error {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    let cause = match self.cause() {
-      Some(c) => format!("{}", c),
-      None => String::from("Unknown"),
-    };
-    let backtrace = match self.backtrace() {
-      Some(b) => format!("{}", b),
-      None => String::from("Unknown"),
-    };
-    let output = format!(
-      "{} \n Cause: {} \n Backtrace: {}",
-      self.inner, cause, backtrace
-    );
-    Display::fmt(&output, f)
-  }
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		let cause = match self.cause() {
+			Some(c) => format!("{}", c),
+			None => String::from("Unknown"),
+		};
+		let backtrace = match self.backtrace() {
+			Some(b) => format!("{}", b),
+			None => String::from("Unknown"),
+		};
+		let output = format!(
+			"{} \n Cause: {} \n Backtrace: {}",
+			self.inner, cause, backtrace
+		);
+		Display::fmt(&output, f)
+	}
 }
 
 impl Error {
-  /// get kind
-  pub fn kind(&self) -> ErrorKind {
-    self.inner.get_context().clone()
-  }
-  /// get cause
-  pub fn cause(&self) -> Option<&dyn Fail> {
-    self.inner.cause()
-  }
-  /// get backtrace
-  pub fn backtrace(&self) -> Option<&Backtrace> {
-    self.inner.backtrace()
-  }
+	/// get kind
+	pub fn kind(&self) -> ErrorKind {
+		self.inner.get_context().clone()
+	}
+	/// get cause
+	pub fn cause(&self) -> Option<&dyn Fail> {
+		self.inner.cause()
+	}
+	/// get backtrace
+	pub fn backtrace(&self) -> Option<&Backtrace> {
+		self.inner.backtrace()
+	}
 }
 
 impl From<ErrorKind> for Error {
@@ -104,8 +106,8 @@ impl From<io::Error> for Error {
 	}
 }
 
-impl<I,E> From<nom::Err<I,E>> for Error {
-	fn from(_err: nom::Err<I,E>) -> Error {
+impl<I, E> From<nom::Err<I, E>> for Error {
+	fn from(_err: nom::Err<I, E>) -> Error {
 		Error {
 			inner: Context::new(ErrorKind::MessageParsing),
 		}

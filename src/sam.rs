@@ -10,10 +10,11 @@ use nom::IResult;
 use rand::distributions::Alphanumeric;
 use rand::{self, Rng};
 
-
 use crate::error::{Error, ErrorKind};
 use crate::net::{I2pAddr, I2pSocketAddr};
-use crate::parsers::{sam_hello, sam_naming_reply, sam_session_status, sam_stream_status, sam_dest_reply};
+use crate::parsers::{
+	sam_dest_reply, sam_hello, sam_naming_reply, sam_session_status, sam_stream_status,
+};
 
 pub static DEFAULT_API: &'static str = "127.0.0.1:7656";
 
@@ -130,7 +131,10 @@ impl SamConnection {
 	}
 
 	pub fn duplicate(&self) -> Result<SamConnection, Error> {
-		self.conn.try_clone().map(|s| SamConnection { conn: s }).map_err(|e| e.into())
+		self.conn
+			.try_clone()
+			.map(|s| SamConnection { conn: s })
+			.map_err(|e| e.into())
 	}
 }
 
@@ -166,7 +170,10 @@ impl Session {
 
 	/// Create a new session identified by the provided destination. Auto-generates
 	/// a nickname uniquely associated with the new session.
-	pub fn from_destination<A: ToSocketAddrs>(sam_addr: A, destination: &str) -> Result<Session, Error> {
+	pub fn from_destination<A: ToSocketAddrs>(
+		sam_addr: A,
+		destination: &str,
+	) -> Result<Session, Error> {
 		Self::create(sam_addr, destination, &nickname(), SessionStyle::Stream)
 	}
 
@@ -185,16 +192,18 @@ impl Session {
 	}
 
 	pub fn duplicate(&self) -> Result<Session, Error> {
-		self.sam.duplicate().map(|s| Session {
-			sam: s,
-			local_dest: self.local_dest.clone(),
-			nickname: self.nickname.clone(),
-		}).map_err(|e| e.into())
+		self.sam
+			.duplicate()
+			.map(|s| Session {
+				sam: s,
+				local_dest: self.local_dest.clone(),
+				nickname: self.nickname.clone(),
+			})
+			.map_err(|e| e.into())
 	}
 }
 
 impl StreamConnect {
-
 	/// Create a new SAM client connection to the provided destination and port.
 	/// Also creates a new transient session to support the connection.
 	pub fn new<A: ToSocketAddrs>(
@@ -281,16 +290,18 @@ pub struct StreamForward {
 }
 
 impl StreamForward {
-	pub fn new<A: ToSocketAddrs>(
-		sam_addr: A,
-	) -> Result<StreamForward, Error> {
-		Ok(StreamForward {session: Session::transient(sam_addr)?})
+	pub fn new<A: ToSocketAddrs>(sam_addr: A) -> Result<StreamForward, Error> {
+		Ok(StreamForward {
+			session: Session::transient(sam_addr)?,
+		})
 	}
 
 	/// Create a new SAM client connection to the provided destination and port
 	/// using the provided session.
 	pub fn with_session(session: &Session) -> Result<StreamForward, Error> {
-		Ok(StreamForward {session: session.duplicate()?})
+		Ok(StreamForward {
+			session: session.duplicate()?,
+		})
 	}
 
 	pub fn accept(&self) -> Result<(StreamConnect, I2pSocketAddr), Error> {
@@ -319,12 +330,14 @@ impl StreamForward {
 			dest_line.split(" ").next().unwrap_or("").trim().to_string()
 		};
 		if destination.is_empty() {
-			return Err(ErrorKind::SAMKeyNotFound("No b64 destination in accept".to_string()).into());
+			return Err(
+				ErrorKind::SAMKeyNotFound("No b64 destination in accept".to_string()).into(),
+			);
 		}
 
 		let addr = I2pSocketAddr::new(I2pAddr::from_b64(&destination)?, 0);
 		stream.peer_dest = destination;
-	
+
 		Ok((stream, addr))
 	}
 
@@ -333,7 +346,9 @@ impl StreamForward {
 	}
 
 	pub fn duplicate(&self) -> Result<StreamForward, Error> {
-		Ok(StreamForward {session: self.session.duplicate()?})
+		Ok(StreamForward {
+			session: self.session.duplicate()?,
+		})
 	}
 }
 

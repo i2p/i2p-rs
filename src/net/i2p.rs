@@ -1,10 +1,10 @@
 use std::fmt;
 
-use data_encoding::{BASE32, Encoding, Specification};
+use data_encoding::{Encoding, Specification, BASE32};
 use lazy_static::lazy_static;
 use log::error;
-use serde_derive::{Serialize, Deserialize};
-use sha2::{Sha256, Digest};
+use serde_derive::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 
 use crate::error::{Error, ErrorKind};
 
@@ -13,7 +13,8 @@ pub const B32_EXT: &'static str = ".b32.i2p";
 lazy_static! {
 	static ref BASE64_I2P: Encoding = {
 		let mut spec = Specification::new();
-		spec.symbols.push_str("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-~");
+		spec.symbols
+			.push_str("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-~");
 		spec.padding = Some('=');
 		spec.encoding().unwrap()
 	};
@@ -71,7 +72,7 @@ impl I2pAddr {
 		hasher.input(bin_data);
 		let mut b32 = BASE32.encode(&hasher.result());
 		b32.push_str(B32_EXT);
-		Ok(I2pAddr{inner: b32})
+		Ok(I2pAddr { inner: b32 })
 	}
 
 	/// Returns the String that makes up this address.

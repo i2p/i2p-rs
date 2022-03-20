@@ -5,4 +5,4 @@ pub mod sam;
 mod parsers;
 
 pub use crate::error::{Error, ErrorKind};
-pub use crate::sam::{Session, SamConnection};
+pub use crate::sam::{SamConnection, Session};

@@ -61,7 +61,10 @@ impl I2pDatagramSocket {
 		super::each_i2p_addr(sam_addr, addr, I2pDatagramSocket::bind_addr).map_err(|e| e.into())
 	}
 
-	fn bind_addr(_sam_addr: &SocketAddr, _addr: &I2pSocketAddr) -> Result<I2pDatagramSocket, Error> {
+	fn bind_addr(
+		_sam_addr: &SocketAddr,
+		_addr: &I2pSocketAddr,
+	) -> Result<I2pDatagramSocket, Error> {
 		unimplemented!();
 	}
 
