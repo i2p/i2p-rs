@@ -1,6 +1,6 @@
-mod error;
+pub mod error;
 pub mod net;
-mod sam;
+pub mod sam;
 
 mod parsers;
 
