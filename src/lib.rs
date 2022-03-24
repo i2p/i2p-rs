@@ -1,9 +1,8 @@
-#[macro_use]
-extern crate nom;
-#[macro_use]
-extern crate log;
-
+pub mod error;
 pub mod net;
 pub mod sam;
 
 mod parsers;
+
+pub use crate::error::{Error, ErrorKind};
+pub use crate::sam::{SamConnection, Session};

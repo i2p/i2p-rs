@@ -10,3 +10,4 @@ Cargo.lock
 auto-save-list
 tramp
 .\#*
+*.swp
