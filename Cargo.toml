@@ -11,6 +11,9 @@ keywords = ["i2p", "net", "network", "sam"]
 license = "MIT"
 edition = "2018"
 
+[features]
+default = ["public-conn"]
+public-conn = []
 [badges]
 travis-ci = { repository = "i2p/i2p-rs" }
 

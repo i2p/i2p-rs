@@ -28,17 +28,29 @@ pub enum SessionStyle {
 }
 
 pub struct SamConnection {
+	#[cfg(feature = "public-conn")]
+	pub conn: TcpStream,
+	#[cfg(not(feature = "public-conn"))]
 	conn: TcpStream,
 }
 
 pub struct Session {
+	#[cfg(feature = "public-conn")]
+	pub sam: SamConnection,
+	#[cfg(not(feature = "public-conn"))]
 	sam: SamConnection,
 	local_dest: String,
 	nickname: String,
 }
 
 pub struct StreamConnect {
+	#[cfg(feature = "public-conn")]
+	pub sam: SamConnection,
+	#[cfg(not(feature = "public-conn"))]
 	sam: SamConnection,
+	#[cfg(feature = "public-conn")]
+	pub session: Session,
+	#[cfg(not(feature = "public-conn"))]
 	session: Session,
 	peer_dest: String,
 	peer_port: u16,
@@ -136,6 +148,10 @@ impl SamConnection {
 			.map(|s| SamConnection { conn: s })
 			.map_err(|e| e.into())
 	}
+	/// attempts to return a handle to the underlying socket
+	pub fn try_clone(&self) -> std::io::Result<TcpStream> {
+		self.conn.try_clone()
+	}
 }
 
 impl Session {
@@ -200,6 +216,10 @@ impl Session {
 				nickname: self.nickname.clone(),
 			})
 			.map_err(|e| e.into())
+	}
+	/// attempts to return a handle to the underlying socket
+	pub fn try_clone(&self) -> std::io::Result<TcpStream> {
+		self.sam.try_clone()
 	}
 }
 
@@ -267,6 +287,14 @@ impl StreamConnect {
 			peer_port: self.peer_port,
 			local_port: self.local_port,
 		})
+	}
+	/// calls try_clone against the Session object
+	pub fn try_clone_session(&self) -> std::io::Result<TcpStream> {
+		self.session.try_clone()
+	}
+	/// calls try_clone against the SamConnection object
+	pub fn try_clone_sam(&self) -> std::io::Result<TcpStream> {
+		self.sam.try_clone()
 	}
 }
 
