@@ -10,6 +10,17 @@ use crate::error::{Error, ErrorKind};
 
 pub const B32_EXT: &'static str = ".b32.i2p";
 
+
+lazy_static! {
+	static ref BASE32_I2P: Encoding = {
+		let mut spec = Specification::new();
+
+		spec.symbols.push_str("abcdefghijklmnopqrstuvwxyz234567");
+		spec.padding = None;
+		spec.encoding().unwrap()
+	};
+}
+
 lazy_static! {
 	static ref BASE64_I2P: Encoding = {
 		let mut spec = Specification::new();
@@ -70,7 +81,7 @@ impl I2pAddr {
 		})?;
 		let mut hasher = Sha256::new();
 		hasher.input(bin_data);
-		let mut b32 = BASE32.encode(&hasher.result());
+		let mut b32 = BASE32_I2P.encode(&hasher.result());
 		b32.push_str(B32_EXT);
 		Ok(I2pAddr { inner: b32 })
 	}
