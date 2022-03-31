@@ -663,7 +663,16 @@ impl ToString for SAMOptions {
 				options.push_str(i2cp_options_str.as_str());
 			}
 		}
-		options
+		// make sure to remove duplicate options
+		// todo: there is likely a better way of handling this
+		let mut options_parts: Vec<_> = options.split(" ").collect();
+		options_parts.sort_unstable();
+		options_parts.dedup();
+		let mut options_parsed = String::default();
+		for option_part in options_parts.clone() {
+			options_parsed.push_str(&format!("{} ", option_part));
+		}
+		options_parsed
 	}
 }
 
