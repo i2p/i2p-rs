@@ -668,11 +668,11 @@ impl ToString for SAMOptions {
 		let mut options_parts: Vec<_> = options.split(" ").collect();
 		options_parts.sort_unstable();
 		options_parts.dedup();
-		options = String::default();
-		for option_part in options_parts {
-			options.push_str(&format!("{} ", option_part));
+		let mut options_parsed = String::default();
+		for option_part in options_parts.clone() {
+			options_parsed.push_str(&format!("{} ", option_part));
 		}
-		options
+		options_parsed
 	}
 }
 
