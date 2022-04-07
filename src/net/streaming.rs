@@ -3,6 +3,7 @@ use std::io::prelude::*;
 use std::fmt;
 use std::io;
 use std::net::{Shutdown, SocketAddr, ToSocketAddrs};
+use std::time::Duration;
 
 use crate::error::{Error, ErrorKind};
 use crate::net::{I2pAddr, I2pSocketAddr, ToI2pSocketAddrs};
@@ -148,6 +149,12 @@ impl I2pStream {
 	/// Io error with kind io::ErrorKind::WouldBlock is returned.
 	pub fn set_nonblocking(&self, nonblocking: bool) -> Result<(), Error> {
 		self.inner.set_nonblocking(nonblocking)
+	}
+	pub fn set_read_timeout(&self, duration: Option<Duration>) -> std::io::Result<()> {
+		self.inner.set_read_timeout(duration)
+	}
+	pub fn set_write_timeout(&self, duration: Option<Duration>) -> std::io::Result<()> {
+		self.inner.set_write_timeout(duration)
 	}
 
 	/// Shuts down the read, write, or both halves of this connection.
