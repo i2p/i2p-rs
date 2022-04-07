@@ -29,6 +29,9 @@ use crate::sam::{Session, StreamConnect, StreamForward, DEFAULT_API};
 /// } // the stream is closed here
 /// ```
 pub struct I2pStream {
+	#[cfg(feature = "public-conn")]
+	pub inner: StreamConnect,
+	#[cfg(not(feature = "public-conn"))]
 	inner: StreamConnect,
 }
 
@@ -43,6 +46,9 @@ pub struct I2pStream {
 /// [`incoming`]: struct.I2pListener.html#method.incoming
 /// [`I2pListener`]: struct.I2pListener.html
 pub struct Incoming<'a> {
+	#[cfg(feature = "public-conn")]
+	pub listener: &'a I2pListener,
+	#[cfg(not(feature = "public-conn"))]
 	listener: &'a I2pListener,
 }
 
@@ -255,6 +261,9 @@ impl fmt::Debug for I2pStream {
 /// }
 /// ```
 pub struct I2pListener {
+	#[cfg(feature = "public-conn")]
+	pub forward: StreamForward,
+	#[cfg(not(feature = "public-conn"))]
 	forward: StreamForward,
 }
 
