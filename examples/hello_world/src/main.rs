@@ -28,7 +28,9 @@ async fn main() {
 	};
 	info!("New public key: {}", pubkey);
 	info!("New secret key: {}", seckey);
+	// thread synchronization primitive
 	let wg = WaitGroup::new();
+	// message channel primitive
 	let (tx, rx) = crossbeam_channel::bounded::<bool>(1);
 	{
 		let sam_session = i2p::sam::Session::create(
@@ -67,9 +69,17 @@ async fn main() {
 			Ok(listener) => listener,
 			Err(err) => panic!("failed to establish listener with session {:#?}", err),
 		};
+		// force the connection into non-blocking mode
+		sam_session.sam.set_nonblocking(true).unwrap();
+		// akin to Golang's sync.WaitGroup, and allows synchronizing execution across different threads
+		// particularly useful for enabling graceful shutdowns within server applications
 		let wg = wg.clone();
+		// spawns a background task, somewhat similar to Golang's goroutines
 		tokio::task::spawn_blocking(move || {
 			loop {
+				// check to see if we received a message through the crossbeam channel
+				// if not, immediately activate default case, which will continue onto
+				// the following listener.accept() statement
 				select! {
 					recv(rx) -> _msg => {
 						warn!("server received exit signal, goodbye...");
@@ -152,18 +162,13 @@ async fn main() {
 	}
 	let mut buf = [0_u8; 512];
 	match client_conn.read(&mut buf) {
-		Ok(n) => {
-			if let Err(err) = tx.send(true) {
-				info!("client failed to signal server task to exit {:#?}", err);
-			}
-			unsafe {
-				info!(
-					"client read {} bytes. msg {}",
-					n,
-					String::from_utf8_unchecked(buf[0..n].to_vec()).replace("\n", "")
-				);
-			}
-		}
+		Ok(n) => unsafe {
+			info!(
+				"client read {} bytes. msg {}",
+				n,
+				String::from_utf8_unchecked(buf[0..n].to_vec()).replace("\n", "")
+			);
+		},
 		Err(err) => {
 			if let Err(err) = tx.send(true) {
 				error!("client failed to signal server task to exit {:#?}", err);
@@ -171,6 +176,12 @@ async fn main() {
 			panic!("client failed to read from stream {:#?}", err);
 		}
 	}
+	// send a message through the channel to notify the tokio task
+	// to exit
+	if let Err(err) = tx.send(true) {
+		info!("client failed to signal server task to exit {:#?}", err);
+	}
+	// wait for all references to the wait group to be dropped
 	wg.wait();
 	match client_conn.shutdown(Shutdown::Both) {
 		Ok(_) => info!("client shutdown ok"),
