@@ -4,6 +4,7 @@ use std::clone::Clone;
 use std::collections::HashMap;
 use std::io::{self, BufReader};
 use std::net::{Shutdown, SocketAddr, TcpStream, ToSocketAddrs};
+use std::time::Duration;
 
 use log::debug;
 use nom::IResult;
@@ -147,6 +148,12 @@ impl SamConnection {
 
 	pub fn set_nonblocking(&self, nonblocking: bool) -> Result<(), Error> {
 		self.conn.set_nonblocking(nonblocking).map_err(|e| e.into())
+	}
+	pub fn set_read_timeout(&self, duration: Option<Duration>) -> std::io::Result<()> {
+		self.conn.set_read_timeout(duration)
+	}
+	pub fn set_write_timeout(&self, duration: Option<Duration>) -> std::io::Result<()> {
+		self.conn.set_write_timeout(duration)
 	}
 
 	pub fn duplicate(&self) -> Result<SamConnection, Error> {
@@ -295,7 +302,12 @@ impl StreamConnect {
 	pub fn set_nonblocking(&self, nonblocking: bool) -> Result<(), Error> {
 		self.sam.set_nonblocking(nonblocking)
 	}
-
+	pub fn set_read_timeout(&self, duration: Option<Duration>) -> std::io::Result<()> {
+		self.sam.set_read_timeout(duration)
+	}
+	pub fn set_write_timeout(&self, duration: Option<Duration>) -> std::io::Result<()> {
+		self.sam.set_write_timeout(duration)
+	}
 	pub fn shutdown(&self, how: Shutdown) -> Result<(), Error> {
 		self.sam.conn.shutdown(how).map_err(|e| e.into())
 	}
