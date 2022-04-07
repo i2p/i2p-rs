@@ -340,7 +340,10 @@ impl I2CPRouterOptions {
 			));
 		}
 		if let Some(lease_set_type) = &self.lease_set_type {
-			options.push_str(&format!("i2cp.leaseSetType={} ", lease_set_type.to_string()));
+			options.push_str(&format!(
+				"i2cp.leaseSetType={} ",
+				lease_set_type.to_string()
+			));
 		}
 		if let Some(message_reliability) = &self.message_reliability {
 			options.push_str(&format!(
