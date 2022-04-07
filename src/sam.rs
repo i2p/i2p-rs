@@ -22,12 +22,14 @@ pub static DEFAULT_API: &'static str = "127.0.0.1:7656";
 static SAM_MIN: &'static str = "3.0";
 static SAM_MAX: &'static str = "3.2";
 
+#[derive(Clone, Debug)]
 pub enum SessionStyle {
 	Datagram,
 	Raw,
 	Stream,
 }
 
+#[derive(Debug)]
 pub struct SamConnection {
 	#[cfg(feature = "public-conn")]
 	pub conn: TcpStream,
@@ -35,15 +37,16 @@ pub struct SamConnection {
 	conn: TcpStream,
 }
 
+#[derive(Debug)]
 pub struct Session {
 	#[cfg(feature = "public-conn")]
 	pub sam: SamConnection,
 	#[cfg(not(feature = "public-conn"))]
 	sam: SamConnection,
-	local_dest: String,
-	nickname: String,
+	pub local_dest: String,
+	pub nickname: String,
 }
-
+#[derive(Debug)]
 pub struct StreamConnect {
 	#[cfg(feature = "public-conn")]
 	pub sam: SamConnection,
@@ -53,9 +56,9 @@ pub struct StreamConnect {
 	pub session: Session,
 	#[cfg(not(feature = "public-conn"))]
 	session: Session,
-	peer_dest: String,
-	peer_port: u16,
-	local_port: u16,
+	pub peer_dest: String,
+	pub peer_port: u16,
+	pub local_port: u16,
 }
 
 impl SessionStyle {
