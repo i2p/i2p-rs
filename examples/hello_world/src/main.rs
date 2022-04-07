@@ -6,6 +6,7 @@ use i2p::net::{I2pListener, I2pStream};
 use i2p::sam_options::{SignatureType, SAMOptions, I2CPOptions, I2CPClientOptions, I2CPRouterOptions, I2CPTunnelInboundOptions, I2CPTunnelOutboundOptions};
 use log::*;
 use std::io::{Read, Write};
+use std::net::Shutdown;
 use std::str::from_utf8;
 use std::{thread, time};
 use crossbeam_channel::select;
@@ -69,6 +70,10 @@ async fn main() {
 				select! {
 					recv(rx) -> _msg => {
 						warn!("server received exit signal, goodbye...");
+						match sam_session.sam.conn.shutdown(Shutdown::Both) {
+							Ok(_) => info!("server shutdown ok"),
+							Err(err) => error!("server failed to properly shutdown {:#?}", err)
+						}
 						drop(wg);
 						return;
 					},
@@ -149,5 +154,10 @@ async fn main() {
 		}
 	}
 	wg.wait();
+	match client_conn.shutdown(Shutdown::Both) {
+		Ok(_) => info!("client shutdown ok"),
+		Err(err) => error!("client failed to properly shutdown {:#?}", err)
+	}
 	info!("all background processes exited, goodbye...");
+	
 }
