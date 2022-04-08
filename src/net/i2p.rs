@@ -10,7 +10,6 @@ use crate::error::{Error, ErrorKind};
 
 pub const B32_EXT: &'static str = ".b32.i2p";
 
-
 lazy_static! {
 	static ref BASE32_I2P: Encoding = {
 		let mut spec = Specification::new();

@@ -15,18 +15,21 @@ use crate::net::{I2pAddr, I2pSocketAddr};
 use crate::parsers::{
 	sam_dest_reply, sam_hello, sam_naming_reply, sam_session_status, sam_stream_status,
 };
+use crate::sam_options::{SAMOptions, SignatureType};
 
 pub static DEFAULT_API: &'static str = "127.0.0.1:7656";
 
 static SAM_MIN: &'static str = "3.0";
-static SAM_MAX: &'static str = "3.1";
+static SAM_MAX: &'static str = "3.2";
 
+#[derive(Clone, Debug)]
 pub enum SessionStyle {
 	Datagram,
 	Raw,
 	Stream,
 }
 
+#[derive(Debug)]
 pub struct SamConnection {
 	#[cfg(feature = "public-conn")]
 	pub conn: TcpStream,
@@ -34,15 +37,16 @@ pub struct SamConnection {
 	conn: TcpStream,
 }
 
+#[derive(Debug)]
 pub struct Session {
 	#[cfg(feature = "public-conn")]
 	pub sam: SamConnection,
 	#[cfg(not(feature = "public-conn"))]
 	sam: SamConnection,
-	local_dest: String,
-	nickname: String,
+	pub local_dest: String,
+	pub nickname: String,
 }
-
+#[derive(Debug)]
 pub struct StreamConnect {
 	#[cfg(feature = "public-conn")]
 	pub sam: SamConnection,
@@ -52,9 +56,9 @@ pub struct StreamConnect {
 	pub session: Session,
 	#[cfg(not(feature = "public-conn"))]
 	session: Session,
-	peer_dest: String,
-	peer_port: u16,
-	local_port: u16,
+	pub peer_dest: String,
+	pub peer_port: u16,
+	pub local_port: u16,
 }
 
 impl SessionStyle {
@@ -132,8 +136,14 @@ impl SamConnection {
 		Ok(ret["VALUE"].clone())
 	}
 
-	pub fn generate_destination(&mut self) -> Result<(String, String), Error> {
-		let dest_gen_msg = format!("DEST GENERATE \n");
+	pub fn generate_destination(
+		&mut self,
+		signature_type: SignatureType,
+	) -> Result<(String, String), Error> {
+		let dest_gen_msg = format!(
+			"DEST GENERATE SIGNATURE_TYPE={signature_type} \n",
+			signature_type = signature_type.to_string(),
+		);
 		let ret = self.send(dest_gen_msg, sam_dest_reply)?;
 		Ok((ret["PUB"].clone(), ret["PRIV"].clone()))
 	}
@@ -161,16 +171,18 @@ impl Session {
 		destination: &str,
 		nickname: &str,
 		style: SessionStyle,
+		options: SAMOptions,
 	) -> Result<Session, Error> {
 		let mut sam = SamConnection::connect(sam_addr)?;
 		let create_session_msg = format!(
 			// values for SIGNATURE_TYPE and leaseSetEncType taken from
 			// https://github.com/eyedeekay/goSam/blob/62cade9ebc26e48ff32a517ef94212fc90aa92cd/client.go#L169
 			// https://github.com/eyedeekay/goSam/blob/62cade9ebc26e48ff32a517ef94212fc90aa92cd/client.go#L166
-			"SESSION CREATE STYLE={style} ID={nickname} DESTINATION={destination} SIGNATURE_TYPE=EdDSA_SHA512_Ed25519 i2cp.leaseSetEncType=4,0\n",
+			"SESSION CREATE STYLE={style} ID={nickname} DESTINATION={destination} {options}\n",
 			style = style.string(),
 			nickname = nickname,
-			destination = destination
+			destination = destination,
+			options = options.options(),
 		);
 
 		sam.send(create_session_msg, sam_session_status)?;
@@ -190,13 +202,25 @@ impl Session {
 		sam_addr: A,
 		destination: &str,
 	) -> Result<Session, Error> {
-		Self::create(sam_addr, destination, &nickname(), SessionStyle::Stream)
+		Self::create(
+			sam_addr,
+			destination,
+			&nickname(),
+			SessionStyle::Stream,
+			SAMOptions::default(),
+		)
 	}
 
 	/// Convenience constructor to create a new transient session with an
 	/// auto-generated nickname.
 	pub fn transient<A: ToSocketAddrs>(sam_addr: A) -> Result<Session, Error> {
-		Self::create(sam_addr, "TRANSIENT", &nickname(), SessionStyle::Stream)
+		Self::create(
+			sam_addr,
+			"TRANSIENT",
+			&nickname(),
+			SessionStyle::Stream,
+			SAMOptions::default(),
+		)
 	}
 
 	pub fn sam_api(&self) -> Result<SocketAddr, Error> {
