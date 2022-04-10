@@ -349,6 +349,9 @@ impl Write for StreamConnect {
 }
 
 pub struct StreamForward {
+	#[cfg(feature = "public-conn")]
+	pub session: Session,
+	#[cfg(not(feature = "public-conn"))]
 	session: Session,
 }
 
