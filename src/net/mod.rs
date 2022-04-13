@@ -6,6 +6,10 @@ pub use self::datagram::I2pDatagramSocket;
 pub use self::i2p::I2pAddr;
 pub use self::streaming::{I2pListener, I2pStream};
 
+pub use self::i2p::BASE64_I2P;
+pub use self::i2p::BASE32_I2P;
+pub use self::i2p::B32_EXT;
+
 mod addr;
 mod datagram;
 mod i2p;
