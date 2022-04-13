@@ -20,13 +20,14 @@ use crate::sam_options::{SAMOptions, SignatureType};
 pub static DEFAULT_API: &'static str = "127.0.0.1:7656";
 
 static SAM_MIN: &'static str = "3.0";
-static SAM_MAX: &'static str = "3.2";
+static SAM_MAX: &'static str = "3.3";
 
 #[derive(Clone, Debug)]
 pub enum SessionStyle {
 	Datagram,
 	Raw,
 	Stream,
+	Primary,
 }
 
 #[derive(Debug)]
@@ -62,11 +63,12 @@ pub struct StreamConnect {
 }
 
 impl SessionStyle {
-	fn string(&self) -> &str {
+	pub fn string(&self) -> &str {
 		match *self {
 			SessionStyle::Datagram => "DATAGRAM",
 			SessionStyle::Raw => "RAW",
 			SessionStyle::Stream => "STREAM",
+			SessionStyle::Primary => "PRIMARY",
 		}
 	}
 }
@@ -91,7 +93,7 @@ fn verify_response<'a>(vec: &'a [(&str, &str)]) -> Result<HashMap<&'a str, &'a s
 }
 
 impl SamConnection {
-	fn send<F>(&mut self, msg: String, reply_parser: F) -> Result<HashMap<String, String>, Error>
+	pub fn send<F>(&mut self, msg: String, reply_parser: F) -> Result<HashMap<String, String>, Error>
 	where
 		F: Fn(&str) -> IResult<&str, Vec<(&str, &str)>>,
 	{
