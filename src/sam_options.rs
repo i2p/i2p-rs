@@ -208,7 +208,12 @@ pub enum SignatureType {
 	EcdsaSha256P256,
 	EcdsaSha384P384,
 	EcdsaSha512P21,
+	RsaSha256_2048,
+	RsaSha384_3072,
+	RsaSha512_4096,
 	EdDsaSha512Ed25519,
+	EdDsaSha512Ed25519ph,
+	RedDsaSha512Ed25519,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -218,17 +223,6 @@ pub enum MessageReliability {
 	None,
 }
 
-impl SignatureType {
-	fn string(&self) -> &str {
-		match self {
-			Self::DsaSha1 => "DSA_SHA1",
-			Self::EcdsaSha256P256 => "ECDSA_SHA256_P256",
-			Self::EcdsaSha384P384 => "ECDSA_SHA384_P384",
-			Self::EcdsaSha512P21 => "ECDSA_SHA512_P521",
-			Self::EdDsaSha512Ed25519 => "EdDSA_SHA512_Ed25519",
-		}
-	}
-}
 
 /// returns the default settings for a connection to the
 /// SAM bridge. Intentionally the only configured values are
@@ -689,7 +683,27 @@ impl ToString for SignatureType {
 			Self::EcdsaSha256P256 => "ECDSA_SHA256_P256".to_string(),
 			Self::EcdsaSha384P384 => "ECDSA_SHA384_P384".to_string(),
 			Self::EcdsaSha512P21 => "ECDSA_SHA512_P521".to_string(),
+			Self::RsaSha256_2048 => "RSA_SHA256_2048".to_string(),
+			Self::RsaSha384_3072 => "RSA_SHA384_3072".to_string(),
+			Self::RsaSha512_4096 => "RSA_SHA512_4096".to_string(),
 			Self::EdDsaSha512Ed25519 => "EdDSA_SHA512_Ed25519".to_string(),
+			Self::EdDsaSha512Ed25519ph => "EdDSA_SHA512_Ed25519ph".to_string(),
+			Self::RedDsaSha512Ed25519 => "RedDSA_SHA512_Ed25519".to_string(),
 		}
+	}
+}
+
+
+#[cfg(test)]
+mod test {
+	use crate::{sam::DEFAULT_API, SamConnection};
+
+use super::*;
+	#[test]
+	fn test_sigs() {
+		let mut sam_conn = SamConnection::connect(DEFAULT_API).unwrap();
+		let (pubkey, seckey) = sam_conn.generate_destination(SignatureType::RedDsaSha512Ed25519).unwrap();
+		println!("New public key: {}", pubkey);
+		println!("New secret key: {}", seckey);
 	}
 }
