@@ -404,7 +404,7 @@ impl StreamForward {
 	}
 }
 
-fn nickname() -> String {
+pub fn nickname() -> String {
 	let suffix: String = rand::thread_rng()
 		.sample_iter(&Alphanumeric)
 		.take(8)

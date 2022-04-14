@@ -41,6 +41,8 @@ pub enum ErrorKind {
 	SAMI2PError(String),
 	#[fail(display = "I2P address isn't a valid b32 or b64 encoding: {}", _0)]
 	BadAddressEncoding(String),
+	#[fail(display = "Accept encountered error, and session was recreated. try operation again")]
+	SessionRecreated,
 }
 
 impl ErrorKind {
