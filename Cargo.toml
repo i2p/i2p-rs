@@ -1,6 +1,6 @@
 [package]
 name = "i2p"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Jack Grigg <str4d@i2pmail.org>"]
 description = "I2P client library with a std::net-like API"
 homepage = "https://github.com/i2p/i2p-rs"
