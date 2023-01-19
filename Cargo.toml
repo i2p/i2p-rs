@@ -33,11 +33,12 @@ version = "0.4"
 [dependencies.nom]
 version = "^4.2"
 [dependencies.rand]
-version = "0.5"
-[dependencies.sha2]
 version = "0.8"
+[dependencies.sha2]
+version = "0.10"
 [dependencies.dashmap]
-dashmap = "5"
+version = "5"
+features = ["serde"]
 
 [dev-dependencies]
 env_logger = "0.5"

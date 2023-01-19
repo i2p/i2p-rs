@@ -8,8 +8,6 @@ use std::time::Duration;
 
 use log::debug;
 use nom::IResult;
-use rand::distributions::Alphanumeric;
-use rand::{self, Rng};
 
 use crate::error::I2PError;
 use crate::net::{I2pAddr, I2pSocketAddr};
@@ -416,11 +414,7 @@ impl StreamForward {
 }
 
 pub fn nickname() -> String {
-	let suffix: String = rand::thread_rng()
-		.sample_iter(&Alphanumeric)
-		.take(8)
-		.collect();
-	format!("i2prs-{}", suffix)
+	format!("i2prs-{}", crate::utils::rand_string(8))
 }
 
 /*

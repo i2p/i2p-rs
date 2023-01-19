@@ -6,5 +6,7 @@ pub mod session_watcher;
 
 mod parsers;
 
+pub mod utils;
+
 pub use crate::error::I2PError;
 pub use crate::sam::{SamConnection, Session};
