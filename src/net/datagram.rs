@@ -1,8 +1,8 @@
-use std::net::{SocketAddr, ToSocketAddrs};
-
-use crate::error::{Error, ErrorKind};
+use crate::error::I2PError;
 use crate::net::{I2pSocketAddr, ToI2pSocketAddrs};
 use crate::sam::DEFAULT_API;
+use anyhow::Result;
+use std::net::{SocketAddr, ToSocketAddrs};
 
 /// Unimplemented
 ///
@@ -17,7 +17,7 @@ use crate::sam::DEFAULT_API;
 /// use i2p::net::I2pDatagramSocket;
 /// use i2p::Error;
 ///
-/// # fn foo() -> Result<(), Error> {
+/// # fn foo() -> Result<()> {
 /// {
 ///     let mut socket = I2pDatagramSocket::bind("127.0.0.1:34254")?;
 ///
@@ -50,21 +50,18 @@ impl I2pDatagramSocket {
 	///
 	/// let socket = I2pDatagramSocket::bind("127.0.0.1:34254").expect("couldn't bind to address");
 	/// ```
-	pub fn bind<A: ToI2pSocketAddrs>(addr: A) -> Result<I2pDatagramSocket, Error> {
+	pub fn bind<A: ToI2pSocketAddrs>(addr: A) -> Result<I2pDatagramSocket> {
 		I2pDatagramSocket::bind_via(DEFAULT_API, addr)
 	}
 
 	pub fn bind_via<A: ToSocketAddrs, B: ToI2pSocketAddrs>(
 		sam_addr: A,
 		addr: B,
-	) -> Result<I2pDatagramSocket, Error> {
+	) -> Result<I2pDatagramSocket> {
 		super::each_i2p_addr(sam_addr, addr, I2pDatagramSocket::bind_addr).map_err(|e| e.into())
 	}
 
-	fn bind_addr(
-		_sam_addr: &SocketAddr,
-		_addr: &I2pSocketAddr,
-	) -> Result<I2pDatagramSocket, Error> {
+	fn bind_addr(_sam_addr: &SocketAddr, _addr: &I2pSocketAddr) -> Result<I2pDatagramSocket> {
 		unimplemented!();
 	}
 
@@ -81,7 +78,7 @@ impl I2pDatagramSocket {
 	/// let (number_of_bytes, src_addr) = socket.recv_from(&mut buf)
 	///                                         .expect("Didn't receive data");
 	/// ```
-	pub fn recv_from(&self, _buf: &mut [u8]) -> Result<(usize, I2pSocketAddr), Error> {
+	pub fn recv_from(&self, _buf: &mut [u8]) -> Result<(usize, I2pSocketAddr)> {
 		unimplemented!()
 	}
 
@@ -102,7 +99,7 @@ impl I2pDatagramSocket {
 	/// let (number_of_bytes, src_addr) = socket.peek_from(&mut buf)
 	///                                         .expect("Didn't receive data");
 	/// ```
-	pub fn peek_from(&self, _buf: &mut [u8]) -> Result<(usize, I2pSocketAddr), Error> {
+	pub fn peek_from(&self, _buf: &mut [u8]) -> Result<(usize, I2pSocketAddr)> {
 		unimplemented!()
 	}
 
@@ -122,10 +119,10 @@ impl I2pDatagramSocket {
 	/// let socket = I2pDatagramSocket::bind("127.0.0.1:34254").expect("couldn't bind to address");
 	/// socket.send_to(&[0; 10], "127.0.0.1:4242").expect("couldn't send data");
 	/// ```
-	pub fn send_to<A: ToI2pSocketAddrs>(&self, _buf: &[u8], addr: A) -> Result<usize, Error> {
+	pub fn send_to<A: ToI2pSocketAddrs>(&self, _buf: &[u8], addr: A) -> Result<usize> {
 		match addr.to_socket_addrs()?.next() {
 			Some(_addr) => unimplemented!(),
-			None => Err(ErrorKind::UnresolvableAddress.into()),
+			None => Err(I2PError::UnresolvableAddress.into()),
 		}
 	}
 
@@ -140,7 +137,7 @@ impl I2pDatagramSocket {
 	/// assert_eq!(socket.local_addr().unwrap(),
 	///            I2pSocketAddr::new(I2pAddr::new("example.i2p"), 34254));
 	/// ```
-	pub fn local_addr(&self) -> Result<I2pSocketAddr, Error> {
+	pub fn local_addr(&self) -> Result<I2pSocketAddr> {
 		unimplemented!()
 	}
 
@@ -158,7 +155,7 @@ impl I2pDatagramSocket {
 	/// let socket = I2pDatagramSocket::bind("127.0.0.1:34254").expect("couldn't bind to address");
 	/// let socket_clone = socket.try_clone().expect("couldn't clone the socket");
 	/// ```
-	pub fn try_clone(&self) -> Result<I2pDatagramSocket, Error> {
+	pub fn try_clone(&self) -> Result<I2pDatagramSocket> {
 		unimplemented!()
 	}
 
@@ -174,7 +171,7 @@ impl I2pDatagramSocket {
 	/// let socket = I2pDatagramSocket::bind("127.0.0.1:34254").expect("couldn't bind to address");
 	/// socket.connect("127.0.0.1:8080").expect("connect function failed");
 	/// ```
-	pub fn connect<A: ToI2pSocketAddrs>(&self, addr: A) -> Result<(), Error> {
+	pub fn connect<A: ToI2pSocketAddrs>(&self, addr: A) -> Result<()> {
 		self.connect_via(DEFAULT_API, addr)
 	}
 
@@ -182,7 +179,7 @@ impl I2pDatagramSocket {
 		&self,
 		sam_addr: A,
 		addr: B,
-	) -> Result<(), Error> {
+	) -> Result<()> {
 		super::each_i2p_addr(sam_addr, addr, |_sam_addr, _addr| unimplemented!())
 	}
 
@@ -202,7 +199,7 @@ impl I2pDatagramSocket {
 	/// socket.connect("127.0.0.1:8080").expect("connect function failed");
 	/// socket.send(&[0, 1, 2]).expect("couldn't send message");
 	/// ```
-	pub fn send(&self, _buf: &[u8]) -> Result<usize, Error> {
+	pub fn send(&self, _buf: &[u8]) -> Result<usize> {
 		unimplemented!()
 	}
 
@@ -225,7 +222,7 @@ impl I2pDatagramSocket {
 	///     Err(e) => println!("recv function failed: {:?}", e),
 	/// }
 	/// ```
-	pub fn recv(&self, _buf: &mut [u8]) -> Result<usize, Error> {
+	pub fn recv(&self, _buf: &mut [u8]) -> Result<usize> {
 		unimplemented!()
 	}
 
@@ -253,7 +250,7 @@ impl I2pDatagramSocket {
 	///     Err(e) => println!("peek function failed: {:?}", e),
 	/// }
 	/// ```
-	pub fn peek(&self, _buf: &mut [u8]) -> Result<usize, Error> {
+	pub fn peek(&self, _buf: &mut [u8]) -> Result<usize> {
 		unimplemented!()
 	}
 }

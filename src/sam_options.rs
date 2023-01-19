@@ -2,8 +2,7 @@
 //! I2CP client and router options taken from https://geti2p.net/en/docs/protocol/i2cp
 //! SAMv3 options taken from https://geti2p.net/en/docs/api/samv3#options
 
-
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 /// options used when interacting with the SAM bridge
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -216,18 +215,6 @@ pub enum SignatureType {
 pub enum MessageReliability {
 	BestEffort,
 	None,
-}
-
-impl SignatureType {
-	fn string(&self) -> &str {
-		match self {
-			Self::DsaSha1 => "DSA_SHA1",
-			Self::EcdsaSha256P256 => "ECDSA_SHA256_P256",
-			Self::EcdsaSha384P384 => "ECDSA_SHA384_P384",
-			Self::EcdsaSha512P21 => "ECDSA_SHA512_P521",
-			Self::EdDsaSha512Ed25519 => "EdDSA_SHA512_Ed25519",
-		}
-	}
 }
 
 /// returns the default settings for a connection to the
@@ -691,5 +678,21 @@ impl ToString for SignatureType {
 			Self::EcdsaSha512P21 => "ECDSA_SHA512_P521".to_string(),
 			Self::EdDsaSha512Ed25519 => "EdDSA_SHA512_Ed25519".to_string(),
 		}
+	}
+}
+
+#[cfg(test)]
+mod test {
+	use crate::{sam::DEFAULT_API, SamConnection};
+
+	use super::*;
+	#[test]
+	fn test_sigs() {
+		let mut sam_conn = SamConnection::connect(DEFAULT_API).unwrap();
+		let (pubkey, seckey) = sam_conn
+			.generate_destination(SignatureType::RedDsaSha512Ed25519)
+			.unwrap();
+		println!("New public key: {}", pubkey);
+		println!("New secret key: {}", seckey);
 	}
 }

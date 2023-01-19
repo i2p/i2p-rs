@@ -5,7 +5,7 @@ use std::option;
 use std::slice;
 use std::vec;
 
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 use crate::net::i2p::I2pAddr;
 

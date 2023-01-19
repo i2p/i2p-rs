@@ -32,8 +32,9 @@ async fn main() {
 		DEFAULT_API,
 		&seckey,
 		SessionStyle::Stream,
-		Default::default()
-	).unwrap();
+		Default::default(),
+	)
+	.unwrap();
 
 	loop {
 		match watcher.accept() {

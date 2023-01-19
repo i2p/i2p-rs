@@ -1,7 +1,7 @@
-use std::io::prelude::*;
-
+use anyhow::{anyhow, Context, Result};
 use std::clone::Clone;
 use std::collections::HashMap;
+use std::io::prelude::*;
 use std::io::{self, BufReader};
 use std::net::{Shutdown, SocketAddr, TcpStream, ToSocketAddrs};
 use std::time::Duration;
@@ -11,7 +11,7 @@ use nom::IResult;
 use rand::distributions::Alphanumeric;
 use rand::{self, Rng};
 
-use crate::error::{Error, ErrorKind};
+use crate::error::I2PError;
 use crate::net::{I2pAddr, I2pSocketAddr};
 use crate::parsers::{
 	sam_dest_reply, sam_hello, sam_naming_reply, sam_session_status, sam_stream_status,
@@ -72,29 +72,29 @@ impl SessionStyle {
 	}
 }
 
-fn verify_response<'a>(vec: &'a [(&str, &str)]) -> Result<HashMap<&'a str, &'a str>, Error> {
+fn verify_response<'a>(vec: &'a [(&str, &str)]) -> Result<HashMap<&'a str, &'a str>> {
 	let new_vec = vec.clone();
 	let map: HashMap<&str, &str> = new_vec.iter().map(|&(k, v)| (k, v)).collect();
 	let res = map.get("RESULT").unwrap_or(&"OK").clone();
 	let msg = map.get("MESSAGE").unwrap_or(&"").clone();
 	match res {
 		"OK" => Ok(map),
-		"CANT_REACH_PEER" => Err(ErrorKind::SAMCantReachPeer(msg.to_string()).into()),
-		"KEY_NOT_FOUND" => Err(ErrorKind::SAMKeyNotFound(msg.to_string()).into()),
-		"PEER_NOT_FOUND" => Err(ErrorKind::SAMPeerNotFound(msg.to_string()).into()),
-		"DUPLICATED_DEST" => Err(ErrorKind::SAMDuplicatedDest(msg.to_string()).into()),
-		"INVALID_KEY" => Err(ErrorKind::SAMInvalidKey(msg.to_string()).into()),
-		"INVALID_ID" => Err(ErrorKind::SAMInvalidId(msg.to_string()).into()),
-		"TIMEOUT" => Err(ErrorKind::SAMTimeout(msg.to_string()).into()),
-		"I2P_ERROR" => Err(ErrorKind::SAMI2PError(msg.to_string()).into()),
-		_ => Err(ErrorKind::SAMInvalidMessage(msg.to_string()).into()),
+		"CANT_REACH_PEER" => Err(I2PError::SAMCantReachPeer(msg.to_string()).into()),
+		"KEY_NOT_FOUND" => Err(I2PError::SAMKeyNotFound(msg.to_string()).into()),
+		"PEER_NOT_FOUND" => Err(I2PError::SAMPeerNotFound(msg.to_string()).into()),
+		"DUPLICATED_DEST" => Err(I2PError::SAMDuplicatedDest(msg.to_string()).into()),
+		"INVALID_KEY" => Err(I2PError::SAMInvalidKey(msg.to_string()).into()),
+		"INVALID_ID" => Err(I2PError::SAMInvalidId(msg.to_string()).into()),
+		"TIMEOUT" => Err(I2PError::SAMTimeout(msg.to_string()).into()),
+		"I2P_ERROR" => Err(I2PError::SAMI2PError(msg.to_string()).into()),
+		_ => Err(I2PError::SAMInvalidMessage(msg.to_string()).into()),
 	}
 }
 
 impl SamConnection {
-	fn send<F>(&mut self, msg: String, reply_parser: F) -> Result<HashMap<String, String>, Error>
+	pub fn send<F>(&mut self, msg: String, mut reply_parser: F) -> Result<HashMap<String, String>>
 	where
-		F: Fn(&str) -> IResult<&str, Vec<(&str, &str)>>,
+		F: FnMut(&str) -> IResult<&str, Vec<(&str, &str)>>,
 	{
 		debug!("-> {}", &msg);
 		self.conn.write_all(&msg.into_bytes())?;
@@ -104,7 +104,10 @@ impl SamConnection {
 		reader.read_line(&mut buffer)?;
 		debug!("<- {}", &buffer);
 
-		let vec_opts = reply_parser(&buffer)?.1;
+		// TODO: get rid of this hack
+		let b = string_to_static_str(buffer);
+
+		let vec_opts = reply_parser(b)?.1;
 		verify_response(&vec_opts).map(|m| {
 			m.iter()
 				.map(|(k, v)| (k.to_string(), v.to_string()))
@@ -112,7 +115,7 @@ impl SamConnection {
 		})
 	}
 
-	fn handshake(&mut self) -> Result<HashMap<String, String>, Error> {
+	fn handshake(&mut self) -> Result<HashMap<String, String>> {
 		let hello_msg = format!(
 			"HELLO VERSION MIN={min} MAX={max} \n",
 			min = SAM_MIN,
@@ -121,7 +124,7 @@ impl SamConnection {
 		self.send(hello_msg, sam_hello)
 	}
 
-	pub fn connect<A: ToSocketAddrs>(addr: A) -> Result<SamConnection, Error> {
+	pub fn connect<A: ToSocketAddrs>(addr: A) -> Result<SamConnection> {
 		let tcp_stream = TcpStream::connect(addr)?;
 
 		let mut socket = SamConnection { conn: tcp_stream };
@@ -131,7 +134,7 @@ impl SamConnection {
 	}
 
 	// TODO: Implement a lookup table
-	pub fn naming_lookup(&mut self, name: &str) -> Result<String, Error> {
+	pub fn naming_lookup(&mut self, name: &str) -> Result<String> {
 		let naming_lookup_msg = format!("NAMING LOOKUP NAME={name} \n", name = name);
 		let ret = self.send(naming_lookup_msg, sam_naming_reply)?;
 		Ok(ret["VALUE"].clone())
@@ -140,7 +143,7 @@ impl SamConnection {
 	pub fn generate_destination(
 		&mut self,
 		signature_type: SignatureType,
-	) -> Result<(String, String), Error> {
+	) -> Result<(String, String)> {
 		let dest_gen_msg = format!(
 			"DEST GENERATE SIGNATURE_TYPE={signature_type} \n",
 			signature_type = signature_type.to_string(),
@@ -149,7 +152,7 @@ impl SamConnection {
 		Ok((ret["PUB"].clone(), ret["PRIV"].clone()))
 	}
 
-	pub fn set_nonblocking(&self, nonblocking: bool) -> Result<(), Error> {
+	pub fn set_nonblocking(&self, nonblocking: bool) -> Result<()> {
 		self.conn.set_nonblocking(nonblocking).map_err(|e| e.into())
 	}
 	pub fn set_read_timeout(&self, duration: Option<Duration>) -> std::io::Result<()> {
@@ -158,7 +161,7 @@ impl SamConnection {
 	pub fn set_write_timeout(&self, duration: Option<Duration>) -> std::io::Result<()> {
 		self.conn.set_write_timeout(duration)
 	}
-	pub fn duplicate(&self) -> Result<SamConnection, Error> {
+	pub fn duplicate(&self) -> Result<SamConnection> {
 		self.conn
 			.try_clone()
 			.map(|s| SamConnection { conn: s })
@@ -178,7 +181,7 @@ impl Session {
 		nickname: &str,
 		style: SessionStyle,
 		options: SAMOptions,
-	) -> Result<Session, Error> {
+	) -> Result<Session> {
 		let mut sam = SamConnection::connect(sam_addr)?;
 		let create_session_msg = format!(
 			// values for SIGNATURE_TYPE and leaseSetEncType taken from
@@ -204,10 +207,7 @@ impl Session {
 
 	/// Create a new session identified by the provided destination. Auto-generates
 	/// a nickname uniquely associated with the new session.
-	pub fn from_destination<A: ToSocketAddrs>(
-		sam_addr: A,
-		destination: &str,
-	) -> Result<Session, Error> {
+	pub fn from_destination<A: ToSocketAddrs>(sam_addr: A, destination: &str) -> Result<Session> {
 		Self::create(
 			sam_addr,
 			destination,
@@ -219,7 +219,7 @@ impl Session {
 
 	/// Convenience constructor to create a new transient session with an
 	/// auto-generated nickname.
-	pub fn transient<A: ToSocketAddrs>(sam_addr: A) -> Result<Session, Error> {
+	pub fn transient<A: ToSocketAddrs>(sam_addr: A) -> Result<Session> {
 		Self::create(
 			sam_addr,
 			"TRANSIENT",
@@ -229,15 +229,15 @@ impl Session {
 		)
 	}
 
-	pub fn sam_api(&self) -> Result<SocketAddr, Error> {
+	pub fn sam_api(&self) -> Result<SocketAddr> {
 		self.sam.conn.peer_addr().map_err(|e| e.into())
 	}
 
-	pub fn naming_lookup(&mut self, name: &str) -> Result<String, Error> {
+	pub fn naming_lookup(&mut self, name: &str) -> Result<String> {
 		self.sam.naming_lookup(name)
 	}
 
-	pub fn duplicate(&self) -> Result<Session, Error> {
+	pub fn duplicate(&self) -> Result<Session> {
 		self.sam
 			.duplicate()
 			.map(|s| Session {
@@ -260,14 +260,14 @@ impl StreamConnect {
 		sam_addr: A,
 		destination: &str,
 		port: u16,
-	) -> Result<StreamConnect, Error> {
+	) -> Result<StreamConnect> {
 		let session = Session::transient(sam_addr)?;
 		Self::with_session(&session, destination, port)
 	}
 
 	/// Create a new SAM client connection to the provided destination and port
 	/// using the provided session.
-	pub fn with_session(session: &Session, dest: &str, port: u16) -> Result<StreamConnect, Error> {
+	pub fn with_session(session: &Session, dest: &str, port: u16) -> Result<StreamConnect> {
 		let mut sam = SamConnection::connect(session.sam_api()?).unwrap();
 		let dest = sam.naming_lookup(dest)?;
 
@@ -293,15 +293,15 @@ impl StreamConnect {
 		})
 	}
 
-	pub fn peer_addr(&self) -> Result<(String, u16), Error> {
+	pub fn peer_addr(&self) -> Result<(String, u16)> {
 		Ok((self.peer_dest.clone(), self.peer_port))
 	}
 
-	pub fn local_addr(&self) -> Result<(String, u16), Error> {
+	pub fn local_addr(&self) -> Result<(String, u16)> {
 		Ok((self.session.local_dest.clone(), self.local_port))
 	}
 
-	pub fn set_nonblocking(&self, nonblocking: bool) -> Result<(), Error> {
+	pub fn set_nonblocking(&self, nonblocking: bool) -> Result<()> {
 		self.sam.set_nonblocking(nonblocking)
 	}
 	pub fn set_read_timeout(&self, duration: Option<Duration>) -> std::io::Result<()> {
@@ -310,11 +310,11 @@ impl StreamConnect {
 	pub fn set_write_timeout(&self, duration: Option<Duration>) -> std::io::Result<()> {
 		self.sam.set_write_timeout(duration)
 	}
-	pub fn shutdown(&self, how: Shutdown) -> Result<(), Error> {
+	pub fn shutdown(&self, how: Shutdown) -> Result<()> {
 		self.sam.conn.shutdown(how).map_err(|e| e.into())
 	}
 
-	pub fn duplicate(&self) -> Result<StreamConnect, Error> {
+	pub fn duplicate(&self) -> Result<StreamConnect> {
 		Ok(StreamConnect {
 			sam: self.sam.duplicate()?,
 			session: self.session.duplicate()?,
@@ -353,7 +353,7 @@ pub struct StreamForward {
 }
 
 impl StreamForward {
-	pub fn new<A: ToSocketAddrs>(sam_addr: A) -> Result<StreamForward, Error> {
+	pub fn new<A: ToSocketAddrs>(sam_addr: A) -> Result<StreamForward> {
 		Ok(StreamForward {
 			session: Session::transient(sam_addr)?,
 		})
@@ -361,13 +361,13 @@ impl StreamForward {
 
 	/// Create a new SAM client connection to the provided destination and port
 	/// using the provided session.
-	pub fn with_session(session: &Session) -> Result<StreamForward, Error> {
+	pub fn with_session(session: &Session) -> Result<StreamForward> {
 		Ok(StreamForward {
 			session: session.duplicate()?,
 		})
 	}
 
-	pub fn accept(&self) -> Result<(StreamConnect, I2pSocketAddr), Error> {
+	pub fn accept(&self) -> Result<(StreamConnect, I2pSocketAddr)> {
 		let mut sam_conn = SamConnection::connect(self.session.sam_api()?).unwrap();
 
 		let accept_stream_msg = format!(
@@ -394,7 +394,7 @@ impl StreamForward {
 		};
 		if destination.is_empty() {
 			return Err(
-				ErrorKind::SAMKeyNotFound("No b64 destination in accept".to_string()).into(),
+				I2PError::SAMKeyNotFound("No b64 destination in accept".to_string()).into(),
 			);
 		}
 
@@ -404,11 +404,11 @@ impl StreamForward {
 		Ok((stream, addr))
 	}
 
-	pub fn local_addr(&self) -> Result<(String, u16), Error> {
+	pub fn local_addr(&self) -> Result<(String, u16)> {
 		Ok((self.session.local_dest.clone(), 0))
 	}
 
-	pub fn duplicate(&self) -> Result<StreamForward, Error> {
+	pub fn duplicate(&self) -> Result<StreamForward> {
 		Ok(StreamForward {
 			session: self.session.duplicate()?,
 		})
@@ -421,4 +421,14 @@ pub fn nickname() -> String {
 		.take(8)
 		.collect();
 	format!("i2prs-{}", suffix)
+}
+
+/*
+As of Rust version 1.26, it is possible to convert a String to &'static str without using unsafe code:
+This converts the String instance into a boxed str and immediately leaks it. This frees all excess capacity the string may currently occupy.
+
+Note that there are almost always solutions that are preferable over leaking objects, e.g. using the crossbeam crate if you want to share state between threads.
+*/
+fn string_to_static_str(s: String) -> &'static str {
+	Box::leak(s.into_boxed_str())
 }
