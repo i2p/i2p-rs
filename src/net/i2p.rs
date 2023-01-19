@@ -1,5 +1,5 @@
 use anyhow::Result;
-use data_encoding::{Encoding, Specification, BASE32};
+use data_encoding::{Encoding, Specification};
 use lazy_static::lazy_static;
 use log::error;
 use serde::{Deserialize, Serialize};
@@ -8,7 +8,7 @@ use std::fmt;
 
 use crate::error::I2PError;
 
-pub const B32_EXT: &'static str = ".b32.i2p";
+pub const B32_EXT: &str = ".b32.i2p";
 
 lazy_static! {
 	pub static ref BASE32_I2P: Encoding = {

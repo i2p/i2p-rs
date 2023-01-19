@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Context, Result};
+use anyhow::Result;
 use std::clone::Clone;
 use std::collections::HashMap;
 use std::io::prelude::*;
@@ -16,10 +16,10 @@ use crate::parsers::{
 };
 use crate::sam_options::{SAMOptions, SignatureType};
 
-pub static DEFAULT_API: &'static str = "127.0.0.1:7656";
+pub static DEFAULT_API: &str = "127.0.0.1:7656";
 
-static SAM_MIN: &'static str = "3.0";
-static SAM_MAX: &'static str = "3.2";
+static SAM_MIN: &str = "3.0";
+static SAM_MAX: &str = "3.2";
 
 #[derive(Clone, Debug)]
 pub enum SessionStyle {
@@ -71,10 +71,9 @@ impl SessionStyle {
 }
 
 fn verify_response<'a>(vec: &'a [(&str, &str)]) -> Result<HashMap<&'a str, &'a str>> {
-	let new_vec = vec.clone();
-	let map: HashMap<&str, &str> = new_vec.iter().map(|&(k, v)| (k, v)).collect();
-	let res = map.get("RESULT").unwrap_or(&"OK").clone();
-	let msg = map.get("MESSAGE").unwrap_or(&"").clone();
+	let map: HashMap<&str, &str> = vec.iter().copied().collect();
+	let res = <&str>::clone(map.get("RESULT").unwrap_or(&"OK"));
+	let msg = <&str>::clone(map.get("MESSAGE").unwrap_or(&""));
 	match res {
 		"OK" => Ok(map),
 		"CANT_REACH_PEER" => Err(I2PError::SAMCantReachPeer(msg.to_string()).into()),
@@ -114,11 +113,7 @@ impl SamConnection {
 	}
 
 	fn handshake(&mut self) -> Result<HashMap<String, String>> {
-		let hello_msg = format!(
-			"HELLO VERSION MIN={min} MAX={max} \n",
-			min = SAM_MIN,
-			max = SAM_MAX
-		);
+		let hello_msg = format!("HELLO VERSION MIN={SAM_MIN} MAX={SAM_MAX} \n");
 		self.send(hello_msg, sam_hello)
 	}
 
@@ -133,7 +128,7 @@ impl SamConnection {
 
 	// TODO: Implement a lookup table
 	pub fn naming_lookup(&mut self, name: &str) -> Result<String> {
-		let naming_lookup_msg = format!("NAMING LOOKUP NAME={name} \n", name = name);
+		let naming_lookup_msg = format!("NAMING LOOKUP NAME={name} \n");
 		let ret = self.send(naming_lookup_msg, sam_naming_reply)?;
 		Ok(ret["VALUE"].clone())
 	}
@@ -197,8 +192,8 @@ impl Session {
 		let local_dest = sam.naming_lookup("ME")?;
 
 		Ok(Session {
-			sam: sam,
-			local_dest: local_dest,
+			sam,
+			local_dest,
 			nickname: nickname.to_string(),
 		})
 	}
@@ -236,14 +231,11 @@ impl Session {
 	}
 
 	pub fn duplicate(&self) -> Result<Session> {
-		self.sam
-			.duplicate()
-			.map(|s| Session {
-				sam: s,
-				local_dest: self.local_dest.clone(),
-				nickname: self.nickname.clone(),
-			})
-			.map_err(|e| e.into())
+		self.sam.duplicate().map(|s| Session {
+			sam: s,
+			local_dest: self.local_dest.clone(),
+			nickname: self.nickname.clone(),
+		})
 	}
 	/// attempts to return a handle to the underlying socket
 	pub fn try_clone(&self) -> std::io::Result<TcpStream> {
@@ -275,15 +267,15 @@ impl StreamConnect {
 			destination = dest,
 		);
 		if port > 0 {
-			stream_msg.push_str(&format!(" TO_PORT={port}\n", port = port));
+			stream_msg.push_str(&format!(" TO_PORT={port}\n"));
 		} else {
-			stream_msg.push_str("\n");
+			stream_msg.push('\n');
 		}
 
 		sam.send(stream_msg, sam_stream_status)?;
 
 		Ok(StreamConnect {
-			sam: sam,
+			sam,
 			session: session.duplicate()?,
 			peer_dest: dest,
 			peer_port: port,
@@ -388,7 +380,7 @@ impl StreamForward {
 			let mut buf_read = io::BufReader::new(stream.duplicate()?);
 			let mut dest_line = String::new();
 			buf_read.read_line(&mut dest_line)?;
-			dest_line.split(" ").next().unwrap_or("").trim().to_string()
+			dest_line.split(' ').next().unwrap_or("").trim().to_string()
 		};
 		if destination.is_empty() {
 			return Err(

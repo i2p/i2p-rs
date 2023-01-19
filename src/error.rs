@@ -1,5 +1,5 @@
 use nom;
-use std::fmt::{self, Display};
+
 use std::io;
 use thiserror::Error as ThisError;
 

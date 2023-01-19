@@ -93,7 +93,7 @@ impl I2pStream {
 		sam_addr: A,
 		addr: B,
 	) -> Result<I2pStream> {
-		super::each_i2p_addr(sam_addr, addr, I2pStream::connect_addr).map_err(|e| e.into())
+		super::each_i2p_addr(sam_addr, addr, I2pStream::connect_addr)
 	}
 
 	fn connect_addr(sam_addr: &SocketAddr, addr: &I2pSocketAddr) -> Result<I2pStream> {
@@ -292,7 +292,7 @@ impl I2pListener {
 	}
 
 	pub fn bind_via<A: ToSocketAddrs>(sam_addr: A) -> Result<I2pListener> {
-		super::each_addr(sam_addr, I2pListener::bind_addr).map_err(|e| e.into())
+		super::each_addr(sam_addr, I2pListener::bind_addr)
 	}
 
 	fn bind_addr(sam_addr: &SocketAddr) -> Result<I2pListener> {

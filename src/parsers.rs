@@ -1,5 +1,5 @@
 use nom::{
-	alt, do_parse, named, separated_list, tag, take_till,
+	alt,
 	character::complete::{alphanumeric1 as alphanumeric, space1 as space},
 	do_parse, named, separated_list0, tag, take_till,
 };
@@ -161,7 +161,7 @@ mod tests {
 		assert_eq!(
 			sam_naming_reply("NAMING REPLY RESULT=KEY_NOT_FOUND\n"),
 			Ok(("", vec![("RESULT", "KEY_NOT_FOUND")]))
-		);	
+		);
 		if let Err(err) = sam_naming_reply("NAMINGREPLY RESULT=KEY_NOT_FOUND\n") {
 			match err {
 				nom::Err::Error(err) => {
@@ -170,7 +170,7 @@ mod tests {
 				nom::Err::Failure(err) => {
 					assert_eq!(err.code, ErrorKind::Tag);
 				}
-				nom::Err::Incomplete(e) => {
+				nom::Err::Incomplete(_e) => {
 					panic!("unepxected error");
 				}
 			}
@@ -185,7 +185,7 @@ mod tests {
 				nom::Err::Failure(err) => {
 					assert_eq!(err.code, ErrorKind::Tag);
 				}
-				nom::Err::Incomplete(e) => {
+				nom::Err::Incomplete(_e) => {
 					panic!("unepxected error");
 				}
 			}
