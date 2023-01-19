@@ -1,5 +1,7 @@
-use nom::{alphanumeric, alt, do_parse, named, separated_list, space, tag, take_till};
-
+use nom::{
+	alt, do_parse, named, separated_list, tag, take_till,
+	character::complete::{alphanumeric1 as alphanumeric, space1 as space},
+};
 fn is_space(chr: char) -> bool {
 	chr == ' ' || chr == '\t'
 }
@@ -85,7 +87,7 @@ named!(pub sam_dest_reply <&str, Vec<(&str, &str)> >,
 
 #[cfg(test)]
 mod tests {
-	use nom::ErrorKind;
+	use nom::error::ErrorKind;
 
 	#[test]
 	fn hello() {
@@ -158,20 +160,37 @@ mod tests {
 		assert_eq!(
 			sam_naming_reply("NAMING REPLY RESULT=KEY_NOT_FOUND\n"),
 			Ok(("", vec![("RESULT", "KEY_NOT_FOUND")]))
-		);
-
-		assert_eq!(
-			sam_naming_reply("NAMINGREPLY RESULT=KEY_NOT_FOUND\n")
-				.unwrap_err()
-				.into_error_kind(),
-			ErrorKind::Tag
-		);
-		assert_eq!(
-			sam_naming_reply("NAMING  REPLY RESULT=KEY_NOT_FOUND\n")
-				.unwrap_err()
-				.into_error_kind(),
-			ErrorKind::Tag
-		);
+		);	
+		if let Err(err) = sam_naming_reply("NAMINGREPLY RESULT=KEY_NOT_FOUND\n") {
+			match err {
+				nom::Err::Error((_, e)) => {
+					assert_eq!(e, ErrorKind::Tag);
+				}	
+				nom::Err::Failure((_, e)) => {
+					assert_eq!(e, ErrorKind::Tag);
+				}
+				nom::Err::Incomplete(e) => {
+					panic!("unepxected error");
+				}
+			}
+		} else {
+			panic!("expected error");
+		}
+		if let Err(err) = sam_naming_reply("NAMING  REPLY RESULT=KEY_NOT_FOUND\n") {
+			match err {
+				nom::Err::Error((_, e)) => {
+					assert_eq!(e, ErrorKind::Tag);
+				}	
+				nom::Err::Failure((_, e)) => {
+					assert_eq!(e, ErrorKind::Tag);
+				}
+				nom::Err::Incomplete(e) => {
+					panic!("unepxected error");
+				}
+			}
+		} else {
+			panic!("expected error");
+		}
 	}
 
 	#[test]

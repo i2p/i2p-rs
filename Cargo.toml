@@ -31,7 +31,7 @@ version = "1"
 [dependencies.log]
 version = "0.4"
 [dependencies.nom]
-version = "^4.2"
+version = "5"
 [dependencies.rand]
 version = "0.8"
 [dependencies.sha2]

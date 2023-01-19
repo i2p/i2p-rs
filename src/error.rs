@@ -44,8 +44,8 @@ impl From<io::Error> for I2PError {
 	}
 }
 
-impl<I, E> From<nom::Err<I, E>> for I2PError {
-	fn from(_err: nom::Err<I, E>) -> I2PError {
+impl<E> From<nom::Err<E>> for I2PError {
+	fn from(_err: nom::Err<E>) -> I2PError {
 		Self::MessageParsing
 	}
 }
