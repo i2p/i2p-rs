@@ -15,23 +15,21 @@ use std::net::{SocketAddr, ToSocketAddrs};
 ///
 /// ```no_run
 /// use i2p::net::I2pDatagramSocket;
-/// use i2p::Error;
-///
-/// # fn foo() -> Result<()> {
-/// {
-///     let mut socket = I2pDatagramSocket::bind("127.0.0.1:34254")?;
-///
-///     // read from the socket
-///     let mut buf = [0; 10];
-///     let (amt, src) = socket.recv_from(&mut buf)?;
-///
-///     // send a reply to the socket we received data from
-///     let buf = &mut buf[..amt];
-///     buf.reverse();
-///     socket.send_to(buf, &src)?;
-///     # Ok(())
-/// } // the socket is closed here
-/// # }
+/// use i2p::error::I2PError;
+/// use anyhow::Result;
+/// fn foo() -> Result<()> {
+///    {
+///        let mut socket = I2pDatagramSocket::bind("127.0.0.1:34254")?;
+///        // read from the socket
+///        let mut buf = [0; 10];
+///        let (amt, src) = socket.recv_from(&mut buf)?;
+///        // send a reply to the socket we received data from
+///        let buf = &mut buf[..amt];
+///        buf.reverse();
+///        socket.send_to(buf, &src)?;
+///    }
+///    // the socket is closed here
+/// }
 /// ```
 pub struct I2pDatagramSocket {}
 

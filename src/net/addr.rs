@@ -129,19 +129,20 @@ impl fmt::Display for I2pSocketAddr {
 /// Some examples:
 ///
 /// ```no_run
-/// use i2p::net::{I2pSocketAddr, I2pStream, I2pDatagramSocket, I2pListener, I2pAddr};
-///
-/// let dest = I2pAddr::new("example.i2p");
-/// let port = 12345;
-/// The following lines are equivalent
-/// let i2p_s = I2pStream::connect(I2pSocketAddr::new(dest.clone(), port));
-/// let i2p_s = I2pStream::connect((dest.clone(), port));
-/// let i2p_s = I2pStream::connect(("example.i2p", port));
-/// let i2p_s = I2pStream::connect("example.i2p:12345");
-/// // I2pListener::bind(), I2pDatagramSocket::bind() and I2pDatagramSocket::send_to() behave similarly
-/// let i2p_l = I2pListener::bind();
-/// let mut i2p_dg_s = I2pDatagramSocket::bind(("127.0.0.1", port)).unwrap();
-/// i2p_dg_s.send_to(&[7], (dest, 23451)).unwrap();
+/// fn execute() {
+///    use i2p::net::{I2pSocketAddr, I2pStream, I2pDatagramSocket, I2pListener, I2pAddr};
+///    let dest = I2pAddr::new("example.i2p");
+///    let port = 12345;
+///    // The following lines are equivalent
+///    let i2p_s = I2pStream::connect(I2pSocketAddr::new(dest.clone(), port));
+///    let i2p_s = I2pStream::connect((dest.clone(), port));
+///    let i2p_s = I2pStream::connect(("example.i2p", port));
+///    let i2p_s = I2pStream::connect("example.i2p:12345");
+///    // I2pListener::bind(), I2pDatagramSocket::bind() and I2pDatagramSocket::send_to() behave similarly
+///    let i2p_l = I2pListener::bind();
+///    let mut i2p_dg_s = I2pDatagramSocket::bind(("127.0.0.1", port)).unwrap();
+///    i2p_dg_s.send_to(&[7], (dest, 23451)).unwrap();
+/// }
 /// ```
 pub trait ToI2pSocketAddrs {
 	/// Returned iterator over socket addresses which this type may correspond
