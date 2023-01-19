@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-i2p = {path = "../../", version = "0.1.0"}
+i2p = {path = "../../", version = "0.2.0"}
 env_logger = "0.5"
 log = "0.4"
 crossbeam = "0.8"
