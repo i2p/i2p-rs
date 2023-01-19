@@ -1,13 +1,13 @@
 use std::io::prelude::*;
 
+use crate::error::I2PError;
+use crate::net::{I2pAddr, I2pSocketAddr, ToI2pSocketAddrs};
+use crate::sam::{Session, StreamConnect, StreamForward, DEFAULT_API};
+use anyhow::Result;
 use std::fmt;
 use std::io;
 use std::net::{Shutdown, SocketAddr, ToSocketAddrs};
 use std::time::Duration;
-
-use crate::error::{Error, ErrorKind};
-use crate::net::{I2pAddr, I2pSocketAddr, ToI2pSocketAddrs};
-use crate::sam::{Session, StreamConnect, StreamForward, DEFAULT_API};
 
 /// A structure which represents an I2P stream between a local socket and a
 /// remote socket.
@@ -73,7 +73,7 @@ impl I2pStream {
 	///     println!("Couldn't connect to server...");
 	/// }
 	/// ```
-	pub fn connect<A: ToI2pSocketAddrs>(addr: A) -> Result<I2pStream, Error> {
+	pub fn connect<A: ToI2pSocketAddrs>(addr: A) -> Result<I2pStream> {
 		I2pStream::connect_via(DEFAULT_API, addr)
 	}
 
@@ -81,31 +81,28 @@ impl I2pStream {
 	pub fn connect_with_session<A: ToI2pSocketAddrs>(
 		session: &Session,
 		addr: A,
-	) -> Result<I2pStream, Error> {
-		let addr: Result<_, Error> = addr
+	) -> Result<I2pStream> {
+		let addr: Result<_> = addr
 			.to_socket_addrs()?
 			.next()
-			.ok_or(ErrorKind::UnresolvableAddress.into());
+			.ok_or(I2PError::UnresolvableAddress.into());
 		I2pStream::connect_addr_with_session(session, &addr?)
 	}
 
 	pub fn connect_via<A: ToSocketAddrs, B: ToI2pSocketAddrs>(
 		sam_addr: A,
 		addr: B,
-	) -> Result<I2pStream, Error> {
-		super::each_i2p_addr(sam_addr, addr, I2pStream::connect_addr).map_err(|e| e.into())
+	) -> Result<I2pStream> {
+		super::each_i2p_addr(sam_addr, addr, I2pStream::connect_addr)
 	}
 
-	fn connect_addr(sam_addr: &SocketAddr, addr: &I2pSocketAddr) -> Result<I2pStream, Error> {
+	fn connect_addr(sam_addr: &SocketAddr, addr: &I2pSocketAddr) -> Result<I2pStream> {
 		let stream = StreamConnect::new(sam_addr, &addr.dest().string(), addr.port())?;
 
 		Ok(I2pStream { inner: stream })
 	}
 
-	fn connect_addr_with_session(
-		session: &Session,
-		addr: &I2pSocketAddr,
-	) -> Result<I2pStream, Error> {
+	fn connect_addr_with_session(session: &Session, addr: &I2pSocketAddr) -> Result<I2pStream> {
 		let stream = StreamConnect::with_session(session, &addr.dest().string(), addr.port())?;
 
 		Ok(I2pStream { inner: stream })
@@ -123,7 +120,7 @@ impl I2pStream {
 	/// assert_eq!(stream.peer_addr().unwrap(),
 	///            I2pSocketAddr::new(I2pAddr::new("example.i2p"), 8080));
 	/// ```
-	pub fn peer_addr(&self) -> Result<I2pSocketAddr, Error> {
+	pub fn peer_addr(&self) -> Result<I2pSocketAddr> {
 		self.inner
 			.peer_addr()
 			.map(|(d, p)| I2pSocketAddr::new(I2pAddr::new(&d), p))
@@ -141,7 +138,7 @@ impl I2pStream {
 	/// assert_eq!(stream.local_addr().unwrap(),
 	///            I2pSocketAddr::new(I2pAddr::new("example.i2p"), 8080));
 	/// ```
-	pub fn local_addr(&self) -> Result<I2pSocketAddr, Error> {
+	pub fn local_addr(&self) -> Result<I2pSocketAddr> {
 		self.inner
 			.local_addr()
 			.map(|(d, p)| I2pSocketAddr::new(I2pAddr::new(&d), p))
@@ -153,7 +150,7 @@ impl I2pStream {
 	/// successful, Ok is returned and no further action is required. If the
 	/// IO operation could not be completed and needs to be retried, a wrapped
 	/// Io error with kind io::ErrorKind::WouldBlock is returned.
-	pub fn set_nonblocking(&self, nonblocking: bool) -> Result<(), Error> {
+	pub fn set_nonblocking(&self, nonblocking: bool) -> Result<()> {
 		self.inner.set_nonblocking(nonblocking)
 	}
 	pub fn set_read_timeout(&self, duration: Option<Duration>) -> std::io::Result<()> {
@@ -181,7 +178,7 @@ impl I2pStream {
 	///                        .expect("Couldn't connect to the server...");
 	/// stream.shutdown(Shutdown::Both).expect("shutdown call failed");
 	/// ```
-	pub fn shutdown(&self, how: Shutdown) -> Result<(), Error> {
+	pub fn shutdown(&self, how: Shutdown) -> Result<()> {
 		self.inner.shutdown(how)
 	}
 
@@ -201,7 +198,7 @@ impl I2pStream {
 	///                        .expect("Couldn't connect to the server...");
 	/// let stream_clone = stream.try_clone().expect("clone failed...");
 	/// ```
-	pub fn try_clone(&self) -> Result<I2pStream, Error> {
+	pub fn try_clone(&self) -> Result<I2pStream> {
 		self.inner.duplicate().map(|s| I2pStream { inner: s })
 	}
 }
@@ -285,20 +282,20 @@ impl I2pListener {
 	///
 	/// let listener = I2pListener::bind().unwrap();
 	/// ```
-	pub fn bind() -> Result<I2pListener, Error> {
+	pub fn bind() -> Result<I2pListener> {
 		I2pListener::bind_via(DEFAULT_API)
 	}
 
-	pub fn bind_with_session(session: &Session) -> Result<I2pListener, Error> {
+	pub fn bind_with_session(session: &Session) -> Result<I2pListener> {
 		let forward = StreamForward::with_session(session)?;
 		Ok(I2pListener { forward })
 	}
 
-	pub fn bind_via<A: ToSocketAddrs>(sam_addr: A) -> Result<I2pListener, Error> {
-		super::each_addr(sam_addr, I2pListener::bind_addr).map_err(|e| e.into())
+	pub fn bind_via<A: ToSocketAddrs>(sam_addr: A) -> Result<I2pListener> {
+		super::each_addr(sam_addr, I2pListener::bind_addr)
 	}
 
-	fn bind_addr(sam_addr: &SocketAddr) -> Result<I2pListener, Error> {
+	fn bind_addr(sam_addr: &SocketAddr) -> Result<I2pListener> {
 		let forward = StreamForward::new(sam_addr)?;
 		Ok(I2pListener { forward })
 	}
@@ -314,7 +311,7 @@ impl I2pListener {
 	/// assert_eq!(listener.local_addr().unwrap(),
 	///            I2pSocketAddr::new(I2pAddr::new("example.i2p"), 8080));
 	/// ```
-	pub fn local_addr(&self) -> Result<I2pSocketAddr, Error> {
+	pub fn local_addr(&self) -> Result<I2pSocketAddr> {
 		self.forward
 			.local_addr()
 			.map(|(d, p)| I2pSocketAddr::new(I2pAddr::new(&d), p))
@@ -334,7 +331,7 @@ impl I2pListener {
 	/// let listener = I2pListener::bind().unwrap();
 	/// let listener_clone = listener.try_clone().unwrap();
 	/// ```
-	pub fn try_clone(&self) -> Result<I2pListener, Error> {
+	pub fn try_clone(&self) -> Result<I2pListener> {
 		let forward = self.forward.duplicate()?;
 		Ok(I2pListener { forward })
 	}
@@ -356,7 +353,7 @@ impl I2pListener {
 	///     Err(e) => println!("couldn't get client: {:?}", e),
 	/// }
 	/// ```
-	pub fn accept(&self) -> Result<(I2pStream, I2pSocketAddr), Error> {
+	pub fn accept(&self) -> Result<(I2pStream, I2pSocketAddr)> {
 		let (i2p_stream, addr) = self.forward.accept()?;
 		Ok((I2pStream { inner: i2p_stream }, addr))
 	}
@@ -392,8 +389,8 @@ impl I2pListener {
 }
 
 impl<'a> Iterator for Incoming<'a> {
-	type Item = Result<I2pStream, Error>;
-	fn next(&mut self) -> Option<Result<I2pStream, Error>> {
+	type Item = Result<I2pStream>;
+	fn next(&mut self) -> Option<Result<I2pStream>> {
 		Some(self.listener.accept().map(|p| p.0))
 	}
 }

@@ -2,8 +2,7 @@
 //! I2CP client and router options taken from https://geti2p.net/en/docs/protocol/i2cp
 //! SAMv3 options taken from https://geti2p.net/en/docs/api/samv3#options
 
-
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 /// options used when interacting with the SAM bridge
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -208,7 +207,12 @@ pub enum SignatureType {
 	EcdsaSha256P256,
 	EcdsaSha384P384,
 	EcdsaSha512P21,
+	RsaSha256_2048,
+	RsaSha384_3072,
+	RsaSha512_4096,
 	EdDsaSha512Ed25519,
+	EdDsaSha512Ed25519ph,
+	RedDsaSha512Ed25519,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -216,18 +220,6 @@ pub enum SignatureType {
 pub enum MessageReliability {
 	BestEffort,
 	None,
-}
-
-impl SignatureType {
-	fn string(&self) -> &str {
-		match self {
-			Self::DsaSha1 => "DSA_SHA1",
-			Self::EcdsaSha256P256 => "ECDSA_SHA256_P256",
-			Self::EcdsaSha384P384 => "ECDSA_SHA384_P384",
-			Self::EcdsaSha512P21 => "ECDSA_SHA512_P521",
-			Self::EdDsaSha512Ed25519 => "EdDSA_SHA512_Ed25519",
-		}
-	}
 }
 
 /// returns the default settings for a connection to the
@@ -271,13 +263,13 @@ impl I2CPOptions {
 		let mut options = String::default();
 		if let Some(router_options) = &self.router_options {
 			let router_options_str = router_options.string();
-			if router_options_str != "" {
+			if !router_options_str.is_empty() {
 				options.push_str(router_options_str.as_str());
 			}
 		}
 		if let Some(client_options) = &self.client_options {
 			let client_options_str = client_options.string();
-			if client_options_str != "" {
+			if !client_options_str.is_empty() {
 				options.push_str(client_options_str.as_str());
 			}
 		}
@@ -289,22 +281,21 @@ impl I2CPRouterOptions {
 	pub fn string(&self) -> String {
 		let mut options = String::default();
 		if let Some(client_message_timeout) = &self.client_message_timeout {
-			options.push_str(&format!("clientMessageTimeout={} ", client_message_timeout));
+			options.push_str(&format!("clientMessageTimeout={client_message_timeout} "));
 		}
 		if let Some(crypto_options) = &self.crypto_options {
 			let crypto_options_str = crypto_options.string();
-			if crypto_options_str != "" {
-				options.push_str(&crypto_options_str.as_str());
+			if !crypto_options_str.is_empty() {
+				options.push_str(crypto_options_str.as_str());
 			}
 		}
 		if let Some(dont_publish_lease_set) = &self.dont_publish_lease_set {
 			options.push_str(&format!(
-				"i2cp.dontPublishLeaseSet={} ",
-				dont_publish_lease_set
+				"i2cp.dontPublishLeaseSet={dont_publish_lease_set} "
 			));
 		}
 		if let Some(fast_receive) = &self.fast_receive {
-			options.push_str(&format!("i2cp.fastReceive={} ", fast_receive));
+			options.push_str(&format!("i2cp.fastReceive={fast_receive} "));
 		}
 		if let Some(lease_set_auth_type) = &self.lease_set_auth_type {
 			options.push_str(&format!(
@@ -355,27 +346,26 @@ impl I2CPRouterOptions {
 			));
 		}
 		if let Some(password) = &self.password {
-			options.push_str(&format!("i2cp.password={} ", password));
+			options.push_str(&format!("i2cp.password={password} "));
 		}
 		if let Some(username) = &self.username {
-			options.push_str(&format!("i2cp.username={} ", username));
+			options.push_str(&format!("i2cp.username={username} "));
 		}
 		if let Some(inbound) = &self.inbound {
 			let inbound_str = inbound.string();
-			if inbound_str != "" {
+			if !inbound_str.is_empty() {
 				options.push_str(inbound_str.as_str());
 			}
 		}
 		if let Some(outbound) = &self.outbound {
 			let outbound_str = outbound.string();
-			if outbound_str != "" {
+			if !outbound_str.is_empty() {
 				options.push_str(outbound_str.as_str());
 			}
 		}
 		if let Some(should_bundle_reply_info) = &self.should_bundle_reply_info {
 			options.push_str(&format!(
-				"shouldBundleReplyInfo={} ",
-				should_bundle_reply_info
+				"shouldBundleReplyInfo={should_bundle_reply_info} "
 			));
 		}
 		options
@@ -386,19 +376,19 @@ impl I2CPClientOptions {
 	pub fn string(&self) -> String {
 		let mut options = String::default();
 		if let Some(close_idle_time) = &self.close_idle_time {
-			options.push_str(&format!("i2cp.closeIdleTime={} ", close_idle_time));
+			options.push_str(&format!("i2cp.closeIdleTime={close_idle_time} "));
 		}
 		if let Some(close_on_idle) = &self.close_on_idle {
-			options.push_str(&format!("i2cp.closeOnIdle={} ", close_on_idle));
+			options.push_str(&format!("i2cp.closeOnIdle={close_on_idle} "));
 		}
 		if let Some(encrypt_lease_set) = &self.encrypt_lease_set {
-			options.push_str(&format!("i2cp.encryptLeaseSet={} ", encrypt_lease_set));
+			options.push_str(&format!("i2cp.encryptLeaseSet={encrypt_lease_set} "));
 		}
 		if let Some(fast_receive) = &self.fast_receive {
-			options.push_str(&format!("i2cp.fastReceive={} ", fast_receive));
+			options.push_str(&format!("i2cp.fastReceive={fast_receive} "));
 		}
 		if let Some(gzip) = &self.gzip {
-			options.push_str(&format!("i2cp.gzip={} ", gzip));
+			options.push_str(&format!("i2cp.gzip={gzip} "));
 		}
 		if let Some(lease_set_auth_type) = &self.lease_set_auth_type {
 			options.push_str(&format!(
@@ -446,19 +436,19 @@ impl I2CPClientOptions {
 			));
 		}
 		if let Some(reduce_idle_time) = &self.reduce_idle_time {
-			options.push_str(&format!("i2cp.reduceIdleTime={} ", reduce_idle_time));
+			options.push_str(&format!("i2cp.reduceIdleTime={reduce_idle_time} "));
 		}
 		if let Some(reduce_on_idle) = &self.reduce_on_idle {
-			options.push_str(&format!("i2cp.reduceOnIdle={} ", reduce_on_idle));
+			options.push_str(&format!("i2cp.reduceOnIdle={reduce_on_idle} "));
 		}
 		if let Some(ssl) = &self.ssl {
-			options.push_str(&format!("i2cp.ssl={} ", ssl));
+			options.push_str(&format!("i2cp.ssl={ssl} "));
 		}
 		if let Some(tcp_host) = &self.tcp_host {
-			options.push_str(&format!("i2cp.tcp.host={} ", tcp_host));
+			options.push_str(&format!("i2cp.tcp.host={tcp_host} "));
 		}
 		if let Some(tcp_port) = &self.tcp_port {
-			options.push_str(&format!("i2cp.tcp.port={} ", tcp_port));
+			options.push_str(&format!("i2cp.tcp.port={tcp_port} "));
 		}
 		options
 	}
@@ -468,16 +458,16 @@ impl I2CPRouterCryptoOptions {
 	pub fn string(&self) -> String {
 		let mut options = String::default();
 		if let Some(low_tag_threshold) = &self.low_tag_threshold {
-			options.push_str(&format!("crypto.lowTagThreshold={} ", low_tag_threshold));
+			options.push_str(&format!("crypto.lowTagThreshold={low_tag_threshold} "));
 		}
 		if let Some(inbound_tags) = &self.ratchet_inbound_tags {
-			options.push_str(&format!("crypto.ratchet.inboundTags={} ", inbound_tags));
+			options.push_str(&format!("crypto.ratchet.inboundTags={inbound_tags} "));
 		}
 		if let Some(outbound_tags) = &self.ratchet_outbound_tags {
-			options.push_str(&format!("crypto.ratchet.outboundTags={} ", outbound_tags));
+			options.push_str(&format!("crypto.ratchet.outboundTags={outbound_tags} "));
 		}
 		if let Some(tags_to_send) = &self.tags_to_send {
-			options.push_str(&format!("crypto.tagsToSend={} ", tags_to_send));
+			options.push_str(&format!("crypto.tagsToSend={tags_to_send} "));
 		}
 		options
 	}
@@ -487,25 +477,25 @@ impl I2CPTunnelInboundOptions {
 	pub fn string(&self) -> String {
 		let mut options = String::default();
 		if let Some(allow_zero_hop) = &self.allow_zero_hop {
-			options.push_str(&format!("inbound.allowZeroHop={} ", allow_zero_hop));
+			options.push_str(&format!("inbound.allowZeroHop={allow_zero_hop} "));
 		}
 		if let Some(backup_quantity) = &self.backup_quantity {
-			options.push_str(&format!("inbound.backupQuantity={} ", backup_quantity));
+			options.push_str(&format!("inbound.backupQuantity={backup_quantity} "));
 		}
 		if let Some(ip_restriction) = &self.ip_restriction {
-			options.push_str(&format!("inbound.IPRestriction={} ", ip_restriction));
+			options.push_str(&format!("inbound.IPRestriction={ip_restriction} "));
 		}
 		if let Some(length) = &self.length {
-			options.push_str(&format!("inbound.length={} ", length));
+			options.push_str(&format!("inbound.length={length} "));
 		}
 		if let Some(length_variance) = &self.length_variance {
-			options.push_str(&format!("inbound.lengthVariance{} ", length_variance));
+			options.push_str(&format!("inbound.lengthVariance{length_variance} "));
 		}
 		if let Some(quantity) = &self.quantity {
-			options.push_str(&format!("inbound.quantity={} ", quantity));
+			options.push_str(&format!("inbound.quantity={quantity} "));
 		}
 		if let Some(random_key) = &self.random_key {
-			options.push_str(&format!("inbound.randomKey={} ", random_key));
+			options.push_str(&format!("inbound.randomKey={random_key} "));
 		}
 		options
 	}
@@ -515,28 +505,28 @@ impl I2CPTunnelOutboundOptions {
 	pub fn string(&self) -> String {
 		let mut options = String::default();
 		if let Some(allow_zero_hop) = &self.allow_zero_hop {
-			options.push_str(&format!("outbound.allowZeroHop={} ", allow_zero_hop));
+			options.push_str(&format!("outbound.allowZeroHop={allow_zero_hop} "));
 		}
 		if let Some(backup_quantity) = &self.backup_quantity {
-			options.push_str(&format!("outbound.backupQuantity={} ", backup_quantity));
+			options.push_str(&format!("outbound.backupQuantity={backup_quantity} "));
 		}
 		if let Some(ip_restriction) = &self.ip_restriction {
-			options.push_str(&format!("outbound.IPRestriction={} ", ip_restriction));
+			options.push_str(&format!("outbound.IPRestriction={ip_restriction} "));
 		}
 		if let Some(length) = &self.length {
-			options.push_str(&format!("outbound.length={} ", length));
+			options.push_str(&format!("outbound.length={length} "));
 		}
 		if let Some(length_variance) = &self.length_variance {
-			options.push_str(&format!("outbound.lengthVariance{} ", length_variance));
+			options.push_str(&format!("outbound.lengthVariance{length_variance} "));
 		}
 		if let Some(priority) = &self.priority {
-			options.push_str(&format!("outbound.priority={} ", priority));
+			options.push_str(&format!("outbound.priority={priority} "));
 		}
 		if let Some(quantity) = &self.quantity {
-			options.push_str(&format!("outbound.quantity={} ", quantity));
+			options.push_str(&format!("outbound.quantity={quantity} "));
 		}
 		if let Some(random_key) = &self.random_key {
-			options.push_str(&format!("outbound.randomKey={} ", random_key));
+			options.push_str(&format!("outbound.randomKey={random_key} "));
 		}
 		options
 	}
@@ -658,25 +648,25 @@ impl ToString for SAMOptions {
 	fn to_string(&self) -> String {
 		let mut options = String::default();
 		if let Some(from_port) = &self.from_port {
-			options.push_str(&format!("FROM_PORT={} ", from_port));
+			options.push_str(&format!("FROM_PORT={from_port} "));
 		}
 		if let Some(to_port) = &self.to_port {
-			options.push_str(&format!("TO_PORT={} ", to_port));
+			options.push_str(&format!("TO_PORT={to_port} "));
 		}
 		if let Some(i2cp_options) = &self.i2cp_options {
 			let i2cp_options_str = i2cp_options.string();
-			if i2cp_options_str != "" {
+			if !i2cp_options_str.is_empty() {
 				options.push_str(i2cp_options_str.as_str());
 			}
 		}
 		// make sure to remove duplicate options
 		// todo: there is likely a better way of handling this
-		let mut options_parts: Vec<_> = options.split(" ").collect();
+		let mut options_parts: Vec<_> = options.split(' ').collect();
 		options_parts.sort_unstable();
 		options_parts.dedup();
 		let mut options_parsed = String::default();
 		for option_part in options_parts.clone() {
-			options_parsed.push_str(&format!("{} ", option_part));
+			options_parsed.push_str(&format!("{option_part} "));
 		}
 		options_parsed
 	}
@@ -689,7 +679,28 @@ impl ToString for SignatureType {
 			Self::EcdsaSha256P256 => "ECDSA_SHA256_P256".to_string(),
 			Self::EcdsaSha384P384 => "ECDSA_SHA384_P384".to_string(),
 			Self::EcdsaSha512P21 => "ECDSA_SHA512_P521".to_string(),
+			Self::RsaSha256_2048 => "RSA_SHA256_2048".to_string(),
+			Self::RsaSha384_3072 => "RSA_SHA384_3072".to_string(),
+			Self::RsaSha512_4096 => "RSA_SHA512_4096".to_string(),
 			Self::EdDsaSha512Ed25519 => "EdDSA_SHA512_Ed25519".to_string(),
+			Self::EdDsaSha512Ed25519ph => "EdDSA_SHA512_Ed25519ph".to_string(),
+			Self::RedDsaSha512Ed25519 => "RedDSA_SHA512_Ed25519".to_string(),
 		}
+	}
+}
+
+#[cfg(test)]
+mod test {
+	use crate::{sam::DEFAULT_API, SamConnection};
+
+	use super::*;
+	#[test]
+	fn test_sigs() {
+		let mut sam_conn = SamConnection::connect(DEFAULT_API).unwrap();
+		let (pubkey, seckey) = sam_conn
+			.generate_destination(SignatureType::RedDsaSha512Ed25519)
+			.unwrap();
+		println!("New public key: {pubkey}");
+		println!("New secret key: {seckey}");
 	}
 }
