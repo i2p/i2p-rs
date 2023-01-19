@@ -11,7 +11,7 @@ use crate::error::I2PError;
 pub const B32_EXT: &'static str = ".b32.i2p";
 
 lazy_static! {
-	static ref BASE32_I2P: Encoding = {
+	pub static ref BASE32_I2P: Encoding = {
 		let mut spec = Specification::new();
 
 		spec.symbols.push_str("abcdefghijklmnopqrstuvwxyz234567");
@@ -21,7 +21,7 @@ lazy_static! {
 }
 
 lazy_static! {
-	static ref BASE64_I2P: Encoding = {
+	pub static ref BASE64_I2P: Encoding = {
 		let mut spec = Specification::new();
 		spec.symbols
 			.push_str("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-~");

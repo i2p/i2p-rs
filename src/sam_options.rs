@@ -207,7 +207,12 @@ pub enum SignatureType {
 	EcdsaSha256P256,
 	EcdsaSha384P384,
 	EcdsaSha512P21,
+	RsaSha256_2048,
+	RsaSha384_3072,
+	RsaSha512_4096,
 	EdDsaSha512Ed25519,
+	EdDsaSha512Ed25519ph,
+	RedDsaSha512Ed25519,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -676,7 +681,12 @@ impl ToString for SignatureType {
 			Self::EcdsaSha256P256 => "ECDSA_SHA256_P256".to_string(),
 			Self::EcdsaSha384P384 => "ECDSA_SHA384_P384".to_string(),
 			Self::EcdsaSha512P21 => "ECDSA_SHA512_P521".to_string(),
+			Self::RsaSha256_2048 => "RSA_SHA256_2048".to_string(),
+			Self::RsaSha384_3072 => "RSA_SHA384_3072".to_string(),
+			Self::RsaSha512_4096 => "RSA_SHA512_4096".to_string(),
 			Self::EdDsaSha512Ed25519 => "EdDSA_SHA512_Ed25519".to_string(),
+			Self::EdDsaSha512Ed25519ph => "EdDSA_SHA512_Ed25519ph".to_string(),
+			Self::RedDsaSha512Ed25519 => "RedDSA_SHA512_Ed25519".to_string(),
 		}
 	}
 }
