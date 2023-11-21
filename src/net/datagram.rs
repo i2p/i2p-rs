@@ -3,6 +3,7 @@ use std::net::{SocketAddr, ToSocketAddrs};
 use crate::error::{Error, ErrorKind};
 use crate::net::{I2pSocketAddr, ToI2pSocketAddrs};
 use crate::sam::DEFAULT_API;
+use crate::sam_options::SAMOptions;
 
 /// Unimplemented
 ///
@@ -51,19 +52,21 @@ impl I2pDatagramSocket {
 	/// let socket = I2pDatagramSocket::bind("127.0.0.1:34254").expect("couldn't bind to address");
 	/// ```
 	pub fn bind<A: ToI2pSocketAddrs>(addr: A) -> Result<I2pDatagramSocket, Error> {
-		I2pDatagramSocket::bind_via(DEFAULT_API, addr)
+		I2pDatagramSocket::bind_via(DEFAULT_API, addr, &SAMOptions::default())
 	}
 
 	pub fn bind_via<A: ToSocketAddrs, B: ToI2pSocketAddrs>(
 		sam_addr: A,
 		addr: B,
+		options: &SAMOptions
 	) -> Result<I2pDatagramSocket, Error> {
-		super::each_i2p_addr(sam_addr, addr, I2pDatagramSocket::bind_addr).map_err(|e| e.into())
+		super::each_i2p_addr(sam_addr, addr, options,I2pDatagramSocket::bind_addr).map_err(|e| e.into())
 	}
 
 	fn bind_addr(
 		_sam_addr: &SocketAddr,
 		_addr: &I2pSocketAddr,
+		_options: &SAMOptions
 	) -> Result<I2pDatagramSocket, Error> {
 		unimplemented!();
 	}
@@ -175,15 +178,16 @@ impl I2pDatagramSocket {
 	/// socket.connect("127.0.0.1:8080").expect("connect function failed");
 	/// ```
 	pub fn connect<A: ToI2pSocketAddrs>(&self, addr: A) -> Result<(), Error> {
-		self.connect_via(DEFAULT_API, addr)
+		self.connect_via(DEFAULT_API, addr, &SAMOptions::default())
 	}
 
 	pub fn connect_via<A: ToSocketAddrs, B: ToI2pSocketAddrs>(
 		&self,
 		sam_addr: A,
 		addr: B,
+		options: &SAMOptions,
 	) -> Result<(), Error> {
-		super::each_i2p_addr(sam_addr, addr, |_sam_addr, _addr| unimplemented!())
+		super::each_i2p_addr(sam_addr, addr, options, |_sam_addr, _addr, _opts| unimplemented!())
 	}
 
 	/// Sends data on the socket to the remote address to which it is connected.
