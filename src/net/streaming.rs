@@ -75,7 +75,7 @@ impl I2pStream {
 	/// }
 	/// ```
 	pub fn connect<A: ToI2pSocketAddrs>(addr: A) -> Result<I2pStream, Error> {
-		I2pStream::connect_via(DEFAULT_API, addr, &SAMOptions::default())
+		I2pStream::connect_via(DEFAULT_API, addr, SAMOptions::default())
 	}
 
 	/// Same as `connect` but reuses an existing SAM session.
@@ -93,12 +93,12 @@ impl I2pStream {
 	pub fn connect_via<A: ToSocketAddrs, B: ToI2pSocketAddrs>(
 		sam_addr: A,
 		addr: B,
-		options: &SAMOptions,
+		options: SAMOptions,
 	) -> Result<I2pStream, Error> {
 		super::each_i2p_addr(sam_addr, addr, options, I2pStream::connect_addr).map_err(|e| e.into())
 	}
 
-	fn connect_addr(sam_addr: &SocketAddr, addr: &I2pSocketAddr, options: &SAMOptions) -> Result<I2pStream, Error> {
+	fn connect_addr(sam_addr: &SocketAddr, addr: &I2pSocketAddr, options: SAMOptions) -> Result<I2pStream, Error> {
 		let stream = StreamConnect::new(sam_addr, &addr.dest().string(), addr.port(), options)?;
 
 		Ok(I2pStream { inner: stream })
@@ -297,10 +297,10 @@ impl I2pListener {
 	}
 
 	pub fn bind_via<A: ToSocketAddrs>(sam_addr: A) -> Result<I2pListener, Error> {
-		super::each_addr(sam_addr, &SAMOptions::default(), I2pListener::bind_addr).map_err(|e| e.into())
+		super::each_addr(sam_addr, SAMOptions::default(), I2pListener::bind_addr).map_err(|e| e.into())
 	}
 
-	fn bind_addr(sam_addr: &SocketAddr, options: &SAMOptions) -> Result<I2pListener, Error> {
+	fn bind_addr(sam_addr: &SocketAddr, options: SAMOptions) -> Result<I2pListener, Error> {
 		let forward = StreamForward::new(sam_addr, options)?;
 		Ok(I2pListener { forward })
 	}
@@ -464,7 +464,7 @@ impl I2pListenerBuilder {
 			}
 			super::each_addr(
 				self.addrs.as_slice(), 
-				&self.options, 
+				self.options, 
 				I2pListener::bind_addr
 			).map_err(|e| e.into())
 		}

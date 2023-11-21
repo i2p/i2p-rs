@@ -177,7 +177,7 @@ impl Session {
 		destination: &str,
 		nickname: &str,
 		style: SessionStyle,
-		options: &SAMOptions,
+		options: SAMOptions,
 	) -> Result<Session, Error> {
 		let mut sam = SamConnection::connect(sam_addr)?;
 		let create_session_msg = format!(
@@ -207,7 +207,7 @@ impl Session {
 	pub fn from_destination<A: ToSocketAddrs>(
 		sam_addr: A,
 		destination: &str,
-		options: &SAMOptions,
+		options: SAMOptions,
 	) -> Result<Session, Error> {
 		Self::create(
 			sam_addr,
@@ -220,7 +220,7 @@ impl Session {
 
 	/// Convenience constructor to create a new transient session with an
 	/// auto-generated nickname.
-	pub fn transient<A: ToSocketAddrs>(sam_addr: A, options: &SAMOptions) -> Result<Session, Error> {
+	pub fn transient<A: ToSocketAddrs>(sam_addr: A, options: SAMOptions) -> Result<Session, Error> {
 		Self::create(
 			sam_addr,
 			"TRANSIENT",
@@ -261,7 +261,7 @@ impl StreamConnect {
 		sam_addr: A,
 		destination: &str,
 		port: u16,
-		options: &SAMOptions,
+		options: SAMOptions,
 	) -> Result<StreamConnect, Error> {
 		let session = Session::transient(sam_addr, options)?;
 		Self::with_session(&session, destination, port)
@@ -355,7 +355,7 @@ pub struct StreamForward {
 }
 
 impl StreamForward {
-	pub fn new<A: ToSocketAddrs>(sam_addr: A, options: &SAMOptions) -> Result<StreamForward, Error> {
+	pub fn new<A: ToSocketAddrs>(sam_addr: A, options: SAMOptions) -> Result<StreamForward, Error> {
 		Ok(StreamForward {
 			session: Session::transient(sam_addr, options)?,
 		})

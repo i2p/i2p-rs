@@ -90,7 +90,7 @@ impl SamSessionWatcher {
             destination,
             nickname,
             session_style,
-            &opts.clone(), 
+            opts.clone(), 
         )?; 
         let listener = I2pListener::bind_with_session(&session)?; 
         Ok((session, listener))
