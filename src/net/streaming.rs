@@ -8,6 +8,7 @@ use std::time::Duration;
 use crate::error::{Error, ErrorKind};
 use crate::net::{I2pAddr, I2pSocketAddr, ToI2pSocketAddrs};
 use crate::sam::{Session, StreamConnect, StreamForward, DEFAULT_API};
+use crate::sam_options::SAMOptions;
 
 /// A structure which represents an I2P stream between a local socket and a
 /// remote socket.
@@ -74,7 +75,7 @@ impl I2pStream {
 	/// }
 	/// ```
 	pub fn connect<A: ToI2pSocketAddrs>(addr: A) -> Result<I2pStream, Error> {
-		I2pStream::connect_via(DEFAULT_API, addr)
+		I2pStream::connect_via(DEFAULT_API, addr, SAMOptions::default())
 	}
 
 	/// Same as `connect` but reuses an existing SAM session.
@@ -92,12 +93,13 @@ impl I2pStream {
 	pub fn connect_via<A: ToSocketAddrs, B: ToI2pSocketAddrs>(
 		sam_addr: A,
 		addr: B,
+		options: SAMOptions,
 	) -> Result<I2pStream, Error> {
-		super::each_i2p_addr(sam_addr, addr, I2pStream::connect_addr).map_err(|e| e.into())
+		super::each_i2p_addr(sam_addr, addr, options, I2pStream::connect_addr).map_err(|e| e.into())
 	}
 
-	fn connect_addr(sam_addr: &SocketAddr, addr: &I2pSocketAddr) -> Result<I2pStream, Error> {
-		let stream = StreamConnect::new(sam_addr, &addr.dest().string(), addr.port())?;
+	fn connect_addr(sam_addr: &SocketAddr, addr: &I2pSocketAddr, options: SAMOptions) -> Result<I2pStream, Error> {
+		let stream = StreamConnect::new(sam_addr, &addr.dest().string(), addr.port(), options)?;
 
 		Ok(I2pStream { inner: stream })
 	}
@@ -295,11 +297,11 @@ impl I2pListener {
 	}
 
 	pub fn bind_via<A: ToSocketAddrs>(sam_addr: A) -> Result<I2pListener, Error> {
-		super::each_addr(sam_addr, I2pListener::bind_addr).map_err(|e| e.into())
+		super::each_addr(sam_addr, SAMOptions::default(), I2pListener::bind_addr).map_err(|e| e.into())
 	}
 
-	fn bind_addr(sam_addr: &SocketAddr) -> Result<I2pListener, Error> {
-		let forward = StreamForward::new(sam_addr)?;
+	fn bind_addr(sam_addr: &SocketAddr, options: SAMOptions) -> Result<I2pListener, Error> {
+		let forward = StreamForward::new(sam_addr, options)?;
 		Ok(I2pListener { forward })
 	}
 
@@ -395,5 +397,105 @@ impl<'a> Iterator for Incoming<'a> {
 	type Item = Result<I2pStream, Error>;
 	fn next(&mut self) -> Option<Result<I2pStream, Error>> {
 		Some(self.listener.accept().map(|p| p.0))
+	}
+}
+
+
+/// A helper struct for creating `I2pListener`s.
+///
+/// # Examples
+///
+/// ```no_run
+/// use i2p::net::{I2pListenerBuilder, I2pStream};
+///
+/// let listener = I2pListenerBuilder::new().build()?;
+///
+/// fn handle_client(stream: I2pStream) {
+///     // ...
+/// }
+///
+/// // accept connections and process them serially
+/// for stream in listener.incoming() {
+///     match stream {
+///         Ok(stream) => {
+///             handle_client(stream);
+///         }
+///         Err(e) => { /* connection failed */ }
+///     }
+/// }
+/// ```
+pub struct I2pListenerBuilder {
+	session: Option<Session>,
+	addrs: Vec<SocketAddr>,
+	options: SAMOptions,
+}
+
+impl Default for I2pListenerBuilder {
+	fn default() -> Self {
+		I2pListenerBuilder {
+			session: None,
+			addrs: vec![],
+			options: Default::default()
+		}
+	}
+}
+
+impl I2pListenerBuilder {
+
+	/// Build an `I2pListener` and bind to socket addresses using previously
+	/// defined settings.
+	/// 
+	/// If none of `with_session`, `with_addr` or `with_addrs` were called, the
+	/// listener will bind to `crate::sam::DEFAULT_API`.
+	/// 
+	/// If `with_options` was not called, defaults to `SAMOptions::default()`
+	/// 
+	/// If `with_session` was called, all other settings will be ignored.
+	pub fn build(mut self) -> Result<I2pListener, Error> {
+		if let Some(s) = self.session {
+			Ok(I2pListener {
+				forward: StreamForward::with_session(&s)?
+			})
+		}
+		else {
+			// Default to DEFAULT_API if no socket address has been set manually
+			if self.addrs.len() == 0 {
+				self.addrs.extend(ToSocketAddrs::to_socket_addrs(DEFAULT_API)?);
+			}
+			super::each_addr(
+				self.addrs.as_slice(), 
+				self.options, 
+				I2pListener::bind_addr
+			).map_err(|e| e.into())
+		}
+	}
+
+	/// Makes this builder recreate an I2pListener from the specified session.
+	/// According to the SAMv3 protocol, SAM options can only be set upon
+	/// session creation. Therefore, `I2pListenerBuilder::build(...)` will
+	/// ignore any options set using `with_options` if recreating a listener
+	/// using a previous session.
+	pub fn with_session(mut self, session: Session) -> Self {
+		self.session = Some(session);
+		self
+	}
+
+	/// Add `address` to the list of socket addresses to bind to
+	pub fn with_addr(mut self, address: SocketAddr) -> Self {
+		self.addrs.push(address);
+		self
+	}
+
+	/// Add all addresses derived from `addresses` to the list of socket
+	/// addresses to bind to
+	pub fn with_addrs<A: ToSocketAddrs>(mut self, addresses: A) -> Result<Self, Error> {
+		self.addrs.extend(addresses.to_socket_addrs()?);
+		Ok(self)
+	}
+
+	/// Use the SAMOptions specified when building the `I2pListener`
+	pub fn with_options(mut self, opts: SAMOptions) -> Self {
+		self.options = opts;
+		self
 	}
 }
