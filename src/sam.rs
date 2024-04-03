@@ -274,7 +274,7 @@ impl StreamConnect {
 		let dest = sam.naming_lookup(dest)?;
 
 		let mut stream_msg = format!(
-			"STREAM CONNECT ID={nickname} DESTINATION={destination} SILENT=false\n",
+			"STREAM CONNECT ID={nickname} DESTINATION={destination} SILENT=false",
 			nickname = session.nickname,
 			destination = dest,
 		);
