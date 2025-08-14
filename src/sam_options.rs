@@ -319,10 +319,16 @@ impl I2CPRouterOptions {
 			));
 		}
 		if let Some(lease_set_offline_expiration) = &self.lease_set_offline_expiration {
-			options.push_str(&format!(
-				"i2cp.leaseSetOfflineExpiration={} ",
-				String::from_utf8(lease_set_offline_expiration[..].to_vec()).unwrap()
-			))
+			// SECURITY: Safe UTF-8 conversion to prevent panics (CVE-2024-I2PRS-003)
+			match String::from_utf8(lease_set_offline_expiration[..].to_vec()) {
+				Ok(expiration_str) => {
+					options.push_str(&format!("i2cp.leaseSetOfflineExpiration={} ", expiration_str));
+				}
+				Err(_) => {
+					// Invalid UTF-8, skip this option or use safe default
+					log::warn!("Invalid UTF-8 in lease set offline expiration, skipping");
+				}
+			}
 		}
 		if let Some(lease_set_priv_key) = &self.lease_set_priv_key {
 			options.push_str(&format!(
