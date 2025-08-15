@@ -270,7 +270,7 @@ impl StreamConnect {
 	/// Create a new SAM client connection to the provided destination and port
 	/// using the provided session.
 	pub fn with_session(session: &Session, dest: &str, port: u16) -> Result<StreamConnect, Error> {
-		let mut sam = SamConnection::connect(session.sam_api()?).unwrap();
+		let mut sam = SamConnection::connect(session.sam_api()?)?;
 		let dest = sam.naming_lookup(dest)?;
 
 		let mut stream_msg = format!(
@@ -370,7 +370,7 @@ impl StreamForward {
 	}
 
 	pub fn accept(&self) -> Result<(StreamConnect, I2pSocketAddr), Error> {
-		let mut sam_conn = SamConnection::connect(self.session.sam_api()?).unwrap();
+		let mut sam_conn = SamConnection::connect(self.session.sam_api()?)?;
 
 		let accept_stream_msg = format!(
 			"STREAM ACCEPT ID={nickname} SILENT=false\n",

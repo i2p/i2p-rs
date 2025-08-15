@@ -79,8 +79,8 @@ impl I2pAddr {
 			ErrorKind::BadAddressEncoding(dest.to_string()).to_err()
 		})?;
 		let mut hasher = Sha256::new();
-		hasher.input(bin_data);
-		let mut b32 = BASE32_I2P.encode(&hasher.result());
+		hasher.update(bin_data);
+		let mut b32 = BASE32_I2P.encode(&hasher.finalize());
 		b32.push_str(B32_EXT);
 		Ok(I2pAddr { inner: b32 })
 	}
